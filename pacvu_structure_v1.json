@@ -1,0 +1,80 @@
+{
+  "meta": {
+    "name": "PacVu G-type v1 — Structure Document",
+    "unit": "mm",
+    "version": "v1-autoresize",
+    "note": "foldingLines는 참고용. 실제 렌더링은 buildFoldLines()가 cfg/g 기반으로 동적 계산함.",
+    "coordinateSystem": "absolute (top-left origin)",
+    "refSize": { "W": 235, "D": 229, "H": 91, "LH": 229 }
+  },
+  "geometryRules": {
+    "H_based": {
+      "note": "H = side panel width = box height",
+      "neckR":     "H * 0.026",
+      "sfDX":      "H * 0.841   (lid side flap diagonal X — 기존 W*0.326 교정)",
+      "sfDY":      "H * 0.227",
+      "dfH1":      "H * 0.665",
+      "dfNY":      "H * 0.951",
+      "r19":       "H * 0.104",
+      "r11":       "H * 0.0165",
+      "insertW":   "H * 0.863   (기존 78.5 고정 교정)",
+      "fiR":       "H * 0.104   (기존 9.5 고정 교정)",
+      "fiTopDrop": "H * 0.049   (기존 4.5 고정 교정)",
+      "fiStepY":   "H * 0.011   (기존 1.0 고정 교정)",
+      "bzOff":     "H * 0.110   (기존 10 고정 교정)",
+      "bzTan13":   "H * 0.143   (기존 13 고정 교정)",
+      "bzTan8":    "H * 0.088   (기존 8 고정 교정)",
+      "bzTan1":    "H * 0.011   (기존 1 고정 교정)",
+      "dustMarg":  "H * 0.027   (기존 2.5 고정 교정)",
+      "dust73":    "H * 0.802   (기존 73 고정 교정)"
+    },
+    "LH_based": {
+      "note": "LH = lid depth",
+      "TC_V": "LH * 0.697  (lid side flap vertical — 기존 H*1.75 교정)"
+    },
+    "W_based": {
+      "dfW":    "W * 0.351",
+      "dfNeckX":"dfW * 0.769  (기존 63.42 고정 교정)"
+    },
+    "D_based": {
+      "dROP":             "D * 0.010",
+      "outerLockInset":   "D * 0.1529  (35/229)",
+      "outerLockH":       "D * 0.1529  (35/229)",
+      "outerLockOut":     "D * 0.0218  (5/229)",
+      "outerLockDiag":    "D * 0.00655 (1.5/229)",
+      "outerLockOuterStr":"D * 0.1397  (32/229)",
+      "outerLockGap":     "D * 0.3712  (85/229) — 기존 85 고정 교정"
+    },
+    "FG_based": {
+      "foldNotch": "FG * 0.4  (기존 2 고정 교정)"
+    },
+    "derived": {
+      "x21L": "xCL + r11",
+      "x21R": "xCR - r11  (기존 baseCenterX ± 116 교정)"
+    }
+  },
+  "foldingLines": [
+    { "id":"f-1L",  "rule":"x=xCL, y: y0+DROP → y1-neckR"  },
+    { "id":"f-1R",  "rule":"x=xCR, y: y0+DROP → y1-neckR"  },
+    { "id":"f-2",   "rule":"y=y1, x: xCL+fm → xCR-fm"      },
+    { "id":"f-3L",  "rule":"x=xCL+fm, y: y1 → y2"           },
+    { "id":"f-3R",  "rule":"x=xCR-fm, y: y1 → y2"           },
+    { "id":"f-4",   "rule":"y=y2, x: xCL+fm → xCR-fm"      },
+    { "id":"f-5L",  "rule":"x=xCL+fm, y: y2 → y3-fm"        },
+    { "id":"f-5R",  "rule":"x=xCR-fm, y: y2 → y3-fm"        },
+    { "id":"f-6",   "rule":"y=y3, x: xCL → xCR"             },
+    { "id":"f-7L-1","rule":"x=xFL,  y: y3-fm → y4+fm  (lockFlap outer)" },
+    { "id":"f-7R-1","rule":"x=xBLR, y: y3-fm → y4+fm  (lockFlap outer)" },
+    { "id":"f-7L-2","rule":"x=xSL,  y: y3-fm → y4+fm  (sidePanel inner)"},
+    { "id":"f-7R-2","rule":"x=xFR,  y: y3-fm → y4+fm  (sidePanel inner)"},
+    { "id":"f-7L-3","rule":"x=xCL,  y: y3 → slot1Y"         },
+    { "id":"f-7L-4","rule":"x=xCL,  y: slot1Y+slotH → slot2Y"},
+    { "id":"f-7L-5","rule":"x=xCL,  y: slot2Y+slotH → y4"   },
+    { "id":"f-7R-3","rule":"x=xCR,  y: y3 → slot1Y"         },
+    { "id":"f-7R-4","rule":"x=xCR,  y: slot1Y+slotH → slot2Y"},
+    { "id":"f-7R-5","rule":"x=xCR,  y: slot2Y+slotH → y4"   },
+    { "id":"f-8",   "rule":"y=y4, x: xCL → xCR"             },
+    { "id":"f-9L",  "rule":"x=xCL+r11, y: y4 → y5"          },
+    { "id":"f-9R",  "rule":"x=xCR-r11, y: y4 → y5"          }
+  ]
+}
