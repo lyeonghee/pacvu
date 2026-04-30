@@ -860,9 +860,11 @@ function renderSVG(cfg) {
   const slots = buildSlots(cfg, g);
   const holes = buildHoles(cfg, g);
   const bleedPath = buildBleedPath(cfg, g, 4);
-  const bounds = getBounds(outerPath, foldLines, slots, holes);
-  const pad = 80, vbX = bounds.minX - pad, vbY = bounds.minY - pad;
-  const vbW = bounds.width + pad * 2, vbH = bounds.height + pad * 2;
+const bounds = getBounds(outerPath, foldLines, slots, holes);
+
+const pad = 5;
+const pad2 = 80, vbX = bounds.minX - pad2, vbY = bounds.minY - pad2;
+const vbW = bounds.width + pad2 * 2, vbH = bounds.height + pad2 * 2;
 
   let svg = `<svg id="mainSvg" xmlns="http://www.w3.org/2000/svg"
     viewBox="${vbX} ${vbY} ${vbW} ${vbH}" width="${vbW}mm" height="${vbH}mm">
@@ -1190,6 +1192,112 @@ function downloadFile(name, content, type) {
   const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([content], { type })), download: name });
   a.click(); URL.revokeObjectURL(a.href);
 }
+
+// ── Illustrator 호환 SVG 출력 ─────────────────────────────────
+// CSS 클래스 → 인라인 style / transform 없음 / 회색 배경 없음
+function buildExportSVG(cfg) {
+  const g          = getGrid(cfg);
+  const outerPath  = buildOuterPath(cfg, g);
+  const foldLines  = buildFoldLines(cfg, g);
+  const slots      = buildSlots(cfg, g);
+  const holes      = buildHoles(cfg, g);
+  const bleedPath  = buildBleedPath(cfg, g, 4);
+  const bounds     = getBounds(outerPath, foldLines, slots, holes);
+const pad = 5;
+const vbX = +(bounds.minX - pad).toFixed(4);
+const vbY = +(bounds.minY - pad).toFixed(4);
+const vbW = +(bounds.width + pad * 2).toFixed(4);
+const vbH = +(bounds.height + pad * 2).toFixed(4);
+
+  const ST = {
+    cut:  'fill:none;stroke:#cc0000;stroke-width:0.45;stroke-linejoin:round;stroke-linecap:round;',
+    fill: 'fill:#ffffff;stroke:#cc0000;stroke-width:0.45;stroke-linejoin:round;stroke-linecap:round;',
+    fold: 'fill:none;stroke:#1d6fe8;stroke-width:0.35;stroke-dasharray:2 1.6;',
+    slot: 'fill:none;stroke:#e53935;stroke-width:0.45;',
+    hole: 'fill:none;stroke:#1f8f4f;stroke-width:0.45;',
+    bleed:'fill:none;stroke:#0055ff;stroke-width:0.45;stroke-linejoin:round;stroke-linecap:round;',
+  };
+
+  let out = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+out += `<svg xmlns="http://www.w3.org/2000/svg"
+viewBox="${vbX} ${vbY} ${vbW} ${vbH}"
+width="${vbW}mm" height="${vbH}mm">\n`;
+
+  // bleed
+  out += `  <path style="${ST.bleed}" d="${bleedPath}"/>\n`;
+  // outer cut (filled white)
+  out += `  <path style="${ST.fill}" d="${outerPath}"/>\n`;
+  // fold lines
+  foldLines.forEach(l => {
+    out += `  <line style="${ST.fold}" x1="${+l.x1.toFixed(4)}" y1="${+l.y1.toFixed(4)}" x2="${+l.x2.toFixed(4)}" y2="${+l.y2.toFixed(4)}"/>\n`;
+  });
+  // slots
+  slots.forEach(s => {
+    out += `  <path style="${ST.slot}" d="${roundRectPath(s.x, s.y, s.w, s.h, 2)}"/>\n`;
+  });
+  // holes
+  holes.forEach(h => {
+    out += `  <path style="${ST.hole}" d="${circlePath(h.cx, h.cy, h.r)}"/>\n`;
+  });
+
+  // dimension lines
+out += buildDimensionLines(cfg, g, bounds);
+
+// 로고 텍스트 - 우측 상단
+const brandSize = Math.max(4, Math.min(9, vbW * 0.018));
+const brandX = vbX + vbW - 8;
+const brandY = vbY + 10;
+
+out += `<text
+  x="${brandX}"
+  y="${brandY}"
+  text-anchor="end"
+  font-family="Malgun Gothic, Arial, sans-serif"
+  font-size="${brandSize.toFixed(2)}"
+  font-weight="600"
+  fill="#777777"
+  letter-spacing="0.3">
+  PacVu Geometry Engine
+</text>\n`;
+
+// ===== WIDTH 치수선 =====
+const dimY = vbY + vbH - 20;
+
+// 좌우 기준 (전체 도면 기준)
+const x1 = bounds.minX;
+const x2 = bounds.minX + bounds.width;
+
+// 치수선
+out += `<line x1="${x1}" y1="${dimY}" x2="${x2}" y2="${dimY}"
+stroke="#000" stroke-width="0.3" />\n`;
+
+// 왼쪽 화살표
+out += `<line x1="${x1}" y1="${dimY}" x2="${x1+3}" y2="${dimY-2}" stroke="#000" stroke-width="0.3"/>\n`;
+out += `<line x1="${x1}" y1="${dimY}" x2="${x1+3}" y2="${dimY+2}" stroke="#000" stroke-width="0.3"/>\n`;
+
+// 오른쪽 화살표
+out += `<line x1="${x2}" y1="${dimY}" x2="${x2-3}" y2="${dimY-2}" stroke="#000" stroke-width="0.3"/>\n`;
+out += `<line x1="${x2}" y1="${dimY}" x2="${x2-3}" y2="${dimY+2}" stroke="#000" stroke-width="0.3"/>\n`;
+
+// 텍스트
+out += `<text
+  x="${(x1 + x2) / 2}"
+  y="${dimY - 3}"
+  text-anchor="middle"
+  font-family="Malgun Gothic, Arial"
+  font-size="5"
+  fill="#000">
+  ${cfg.W} mm
+</text>\n`;
+
+
+// 기존 코드
+out += `</svg>`;
+return out;
+
+  out += `</svg>`;
+  return out;
+}
 function svgToDXF(cfg) {
   const g = getGrid(cfg), fl = buildFoldLines(cfg, g), sl = buildSlots(cfg, g), ho = buildHoles(cfg, g);
   const arr = ['0', 'SECTION', '2', 'ENTITIES'];
@@ -1317,8 +1425,21 @@ get('showLabels')?.addEventListener('change', e => {
     zoomAt(snapZoom(state.zoom, -1));
   });
 
-  get('downloadSvgBtn')?.addEventListener('click', () => downloadFile('pacvu-g-type.svg', state.currentSVGString, 'image/svg+xml'));
-  get('downloadDxfBtn')?.addEventListener('click', () => downloadFile('pacvu-g-type.dxf', svgToDXF(getCfg()), 'application/dxf'));
+
+get('downloadSvgBtn')?.addEventListener('click', () => {
+  const cfg = getCfg();
+  const name = `PacVu_Gbox_${cfg.W}x${cfg.D}x${cfg.H}mm.svg`;
+  downloadFile(name, buildExportSVG(cfg), 'image/svg+xml');
+});
+
+get('downloadDxfBtn')?.addEventListener('click', () => {
+  const cfg = getCfg();
+  const name = `PacVu_Gbox_${cfg.W}x${cfg.D}x${cfg.H}mm.dxf`;
+  downloadFile(name, svgToDXF(cfg), 'application/dxf');
+});
+
+
+
   const sidebar = get('sidebar');
   get('toggleSidebarBtn')?.addEventListener('click', () => sidebar?.classList.add('collapsed'));
   get('showSidebarBtn')?.addEventListener('click', () => sidebar?.classList.toggle('collapsed'));
