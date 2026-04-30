@@ -1260,24 +1260,6 @@ out += `<text
   PacVu Geometry Engine
 </text>\n`;
 
-// ===== WIDTH 치수선 =====
-const dimY = vbY + vbH - 20;
-
-// 좌우 기준 (전체 도면 기준)
-const x1 = bounds.minX;
-const x2 = bounds.minX + bounds.width;
-
-// 치수선
-out += `<line x1="${x1}" y1="${dimY}" x2="${x2}" y2="${dimY}"
-stroke="#000" stroke-width="0.3" />\n`;
-
-// 왼쪽 화살표
-out += `<line x1="${x1}" y1="${dimY}" x2="${x1+3}" y2="${dimY-2}" stroke="#000" stroke-width="0.3"/>\n`;
-out += `<line x1="${x1}" y1="${dimY}" x2="${x1+3}" y2="${dimY+2}" stroke="#000" stroke-width="0.3"/>\n`;
-
-// 오른쪽 화살표
-out += `<line x1="${x2}" y1="${dimY}" x2="${x2-3}" y2="${dimY-2}" stroke="#000" stroke-width="0.3"/>\n`;
-out += `<line x1="${x2}" y1="${dimY}" x2="${x2-3}" y2="${dimY+2}" stroke="#000" stroke-width="0.3"/>\n`;
 
 // 텍스트
 out += `<text
