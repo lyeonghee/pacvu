@@ -25,15 +25,122 @@
 // ============================================================
 
 const state = {
-  showSlots: true, showHoles: true, showLabels: true,
+  showSlots: true,
+  showHoles: true,
+  showFolds: true,
+  showLabels: true,
+  showDims: true,
+
   zoom: 1, panX: 0, panY: 0,
   isDragging: false, dragStartX: 0, dragStartY: 0,
   startPanX: 0, startPanY: 0,
   currentSVGString: '', fitInitialized: false,
-  baseVB: null  // fitToScreen이 계산한 기준 viewBox {x,y,w,h,cx,cy}
+  baseVB: null
 };
 
 let FOLDING_LINES_NORMALIZED = { foldingLines: [] };
+
+
+// ============================================================
+// ①-1 PACKAGE LIBRARY SELECT DATA
+// ============================================================
+
+const BOX_LIBRARY = [
+  {
+    categoryKey: "bakery_hinged",
+    categoryLabel: "01 Bakery hinged box",
+    items: []
+  },
+  {
+    categoryKey: "gable",
+    categoryLabel: "02 Gable box",
+    items: []
+  },
+  {
+    categoryKey: "tuck",
+    categoryLabel: "03 Tuck box",
+    items: [
+      {
+        label: "A형 타입 / 택배박스 기본형",
+        koreanName: "A형 타입",
+        fefcoCode: "0201",
+        engineKey: "abox",
+        variantKey: "default"
+      },
+      {
+        label: "B형 타입 / 기본 칼라박스",
+        koreanName: "B형 타입",
+        fefcoCode: "확인 필요",
+        engineKey: "bbox",
+        variantKey: "default"
+      }
+    ]
+  },
+  {
+    categoryKey: "mailer",
+    categoryLabel: "04 Mailer box",
+    items: [
+      {
+        label: "G-Type Standard (교박스기본)",
+        koreanName: "G형 기본형",
+        fefcoCode: "0427",
+        engineKey: "gbox",
+        variantKey: "default"
+      },
+      {
+        label: "G-Type Lock (락 구조)",
+        koreanName: "G형 락형",
+        fefcoCode: "0427",
+        engineKey: "gbox",
+        variantKey: "lock"
+      }
+    ]
+  },
+  {
+    categoryKey: "handle",
+    categoryLabel: "05 Handle box",
+    items: []
+  },
+  {
+    categoryKey: "rrp_display",
+    categoryLabel: "06 RRP display box",
+    items: [
+      {
+        label: "RRP 기본형 / 진열형 박스",
+        koreanName: "RRP 타입",
+        fefcoCode: "확인 필요",
+        engineKey: "rrpbox",
+        variantKey: "default"
+      }
+    ]
+  },
+  {
+    categoryKey: "sleeve",
+    categoryLabel: "07 Sleeve box",
+    items: []
+  },
+  {
+    categoryKey: "drawer",
+    categoryLabel: "08 Drawer box",
+    items: []
+  },
+  {
+    categoryKey: "cake",
+    categoryLabel: "09 Cake box",
+    items: []
+  },
+  {
+    categoryKey: "shipping",
+    categoryLabel: "10 Shipping box",
+    items: []
+  }
+];
+
+let selectedBoxMeta = {
+  categoryKey: "mailer",
+  engineKey: "gbox",
+  variantKey: "default"
+};
 
 
 // ============================================================
@@ -96,8 +203,13 @@ function getGeo(cfg) {
 
   // ■ H 기준 (side panel = 박스 높이)
   const neckR = H * 0.026;       // lid neck arc radius
-  const sfDX = H * 0.841;       // ★ 기존 W*0.326 → H 기준 (76.5/91)
-  const sfDY = H * 0.227;       // lid side flap diagonal Y
+const sfDX_raw = H * 0.841;
+const sfDY_raw = H * 0.227;
+
+const scale = Math.min(1, (W * 0.45) / sfDX_raw);
+
+const sfDX = sfDX_raw * scale;
+const sfDY = sfDY_raw * scale;
   const dfH1 = H * 0.665;       // dust flap height
   const dfNY = H * 0.951;       // dust flap neck Y
   const r19 = H * 0.104;       // 1-9 arc radius
@@ -107,14 +219,17 @@ function getGeo(cfg) {
   const fiTopDrop = H * 0.049;       // ★ 기존 4.5 고정  → H 기준
   const fiStepY = H * 0.011;       // ★ 기존 1.0 고정  → H 기준
   const bzOff = H * 0.110;       // ★ 기존 10 고정   → H 기준
-  const bzTan13 = H * 0.143;       // ★ 기존 13 고정   → H 기준
-  const bzTan8 = H * 0.088;       // ★ 기존 8 고정    → H 기준
-  const bzTan1 = H * 0.011;       // ★ 기존 1 고정    → H 기준
+
+const bzScale = Math.min(1, W / (H * 1.2));
+
+const bzTan13 = H * 0.143 * bzScale;
+const bzTan8  = H * 0.088 * bzScale;
+const bzTan1  = H * 0.011 * bzScale;
   const dustMarg = H * 0.027;       // ★ 기존 2.5 고정  → H 기준
   const dust73 = H * 0.802;       // ★ 기존 73 고정   → H 기준
 
   // ■ LH 기준 (뚜껑 깊이) ★ 기존 H*1.75 → LH 기준
-  const TC_V = Math.max(LH * 0.697, H * 0.8);  // ★ D 축소 시 찌그러짐 방지
+const TC_V = Math.max(LH - sfDY * 2 - bzTan13 * 2, H * 0.8);  // ★ D 축소 시 찌그러짐 방지
 
   // ■ W 기준
   const dfW = Math.min(W * 0.351, H * 0.92);  // ★ W 확장 시 dustFlap 늘어남 방지
@@ -188,26 +303,43 @@ function buildOuterPath(cfg, g) {
   const neckY = y0 + dROP + dfNY;
   const y16Top = y1 + sfDY + bzTan13;
   const y16Bot = y16Top + TC_V;
+  const flapTopL = xCL - sfDX;
+  const flapTopR = xCR + sfDX;
+  const flapBotL = xSL;
+  const flapBotR = xFR;
+
+  // FIX-lidSideFlap ①: TC_V의 H*0.8 floor가 H>>LH(예:W200/D150/H300)에서
+  //   y16Bot > y2 를 유발 → buildOuterPath 내에서 geometry-correct 값으로 override.
+  //   TC_V_safe = LH에서 상·하 전이 구간(sfDY+bzTan13) 각 1회씩 제거한 순수 수직 길이.
+  //   cfg.LH === cfg.D (getCfg 참고). 모든 값이 정의된 후에 계산 → NaN 불가.
+  const TC_V_safe  = Math.max(cfg.LH - 2 * (sfDY + bzTan13), 0);
+  const y16BotSafe = y16Top + TC_V_safe;   // 항상 y16Top ≤ y16BotSafe < y2
+
+  // FIX-lidSideFlap ②: 1-5/1-7 bezier CP 거리를 실제 flap X-span(H-sfDX) 기준으로 계산.
+  //   bzOff/bzTan8(H 비례)는 H>>sfDX 극단치수에서 CP가 너무 작아 꺾임 → chord/3 으로 교체.
+  //   flapSpanH = xFR-(xCR+sfDX) = H-sfDX. sfDX ≤ H*0.841 이므로 flapSpanH > 0 보장.
+  const flapSpanH = cfg.H - sfDX;
+  const bzLidFlap = Math.sqrt(flapSpanH * flapSpanH + bzTan13 * bzTan13) / 3;
 
   // Left 1-4L ~ 1-9L
   const e4L = arc14entry(xCL - sfDX, y1 + sfDY, xCL, y1, neckR);
   const h4Lx = xCL, h4Ly = y1 - neckR;
   const x15eL = xCL - sfDX, y15eL = y1 + sfDY;
-  const c15_1x = xSL, c15_1y = y16Top - bzTan8;
-  const c15_2x = x15eL - (sfDX / sfNorm) * bzOff, c15_2y = y15eL + (sfDY / sfNorm) * bzOff;
+  const c15_1x = xSL, c15_1y = y16Top - bzLidFlap;                                                   // FIX-lidSideFlap ③
+  const c15_2x = x15eL - (sfDX / sfNorm) * bzLidFlap, c15_2y = y15eL + (sfDY / sfNorm) * bzLidFlap; // FIX-lidSideFlap ③
   const x16L = xSL;
-  const x17sL = xSL + bzOff, y17sL = y16Bot + bzTan13;
-  const x17eL = xSL, y17eL = y16Bot;
-  const c17_1x = x17sL - (sfDX / sfNorm) * bzOff, c17_1y = y17sL - (sfDY / sfNorm) * bzOff;
-  const c17_2x = x17eL, c17_2y = y17eL + bzTan1;
-  const e18L = arc18entry(xSL + bzOff, y16Bot + bzTan13, xCL, y2, neckR);
+
+  // 1-7L 하단 대각선 끝점 = 상단 1-5L과 동일한 sfDX/sfDY 벡터로 대칭
+  const e18L = arc18entry(xCL - sfDX, y2 - sfDY, xCL, y2, neckR);
 
   // Right 1-4R ~ 1-9R
   const e4R = arc14entry(xCR + sfDX, y1 + sfDY, xCR, y1, neckR);
   const x15eR = xFR, y15eR = y16Top;
-  const c15R_1x = (xCR + sfDX) + (sfDX / sfNorm) * bzOff, c15R_1y = (y1 + sfDY) + (sfDY / sfNorm) * bzOff;
-  const c15R_2x = x15eR, c15R_2y = y15eR - bzTan8;
-  const e18R = arc18entry(xFR - bzOff, y16Bot + bzTan13, xCR, y2, neckR);
+  const c15R_1x = (xCR + sfDX) + (sfDX / sfNorm) * bzLidFlap, c15R_1y = (y1 + sfDY) + (sfDY / sfNorm) * bzLidFlap; // FIX-lidSideFlap ④
+  const c15R_2x = x15eR, c15R_2y = y15eR - bzLidFlap;                                                               // FIX-lidSideFlap ④
+
+  // 1-7R 하단 대각선 끝점 = 상단 1-5R과 동일한 sfDX/sfDY 벡터로 대칭
+  const e18R = arc18entry(xCR + sfDX, y2 - sfDY, xCR, y2, neckR);
 
   // insert geometry
   const xInsL = xCL - insertW, xInsR = xCR + insertW;
@@ -230,12 +362,14 @@ function buildOuterPath(cfg, g) {
   p.push(`C ${xCR + dfW} ${y0 + dROP + dust73} ${xCR + dfW - dustMarg} ${y0 + dROP + dfNY} ${xCR + dfNeckX} ${y0 + dROP + dfNY}`);
 
   // right top
-  p.push(`L ${xCR} ${neckY}`, `L ${xCR} ${y1 - neckR}`);
+  p.push(`L ${xCR} ${y1 - neckR}`);
   p.push(`A ${neckR} ${neckR} 0 0 0 ${e4R[0]} ${e4R[1]}`);
   p.push(`L ${xCR + sfDX} ${y1 + sfDY}`);
   p.push(`C ${c15R_1x} ${c15R_1y} ${c15R_2x} ${c15R_2y} ${x15eR} ${y15eR}`);
-  p.push(`L ${xFR} ${y16Bot}`);
-  p.push(`C ${xFR} ${y16Bot + bzTan1} ${xFR - bzOff + (sfDX / sfNorm) * bzOff} ${y16Bot + bzTan13 - (sfDY / sfNorm) * bzOff} ${xFR - bzOff} ${y16Bot + bzTan13}`);
+  p.push(`L ${xFR} ${y16BotSafe}`);                                                   // FIX-lidSideFlap ⑤
+
+  // 1-7R: FIX-lidSideFlap ⑥ — y16BotSafe(경계 보장) + bzLidFlap(span 비례 CP)
+p.push(`C ${xFR} ${y16BotSafe + bzLidFlap * 1.3} ${xCR + sfDX + (sfDX / sfNorm) * bzLidFlap * 1.3} ${y2 - sfDY - (sfDY / sfNorm) * bzLidFlap * 1.3} ${xCR + sfDX} ${y2 - sfDY}`);
   p.push(`L ${e18R[0]} ${e18R[1]}`);
   p.push(`A ${neckR} ${neckR} 0 0 0 ${xCR} ${y2 + neckR}`);
   p.push(`L ${xInsR - r19} ${y2 + neckR}`);
@@ -288,8 +422,10 @@ function buildOuterPath(cfg, g) {
   p.push(`A ${r19} ${r19} 0 0 1 ${xInsL + r19} ${y2 + neckR}`);
   p.push(`L ${xCL} ${y2 + neckR}`);
   p.push(`A ${neckR} ${neckR} 0 0 0 ${e18L[0]} ${e18L[1]}`);
-  p.push(`L ${x17sL} ${y17sL}`);
-  p.push(`C ${c17_1x} ${c17_1y} ${c17_2x} ${c17_2y} ${x17eL} ${y17eL}`);
+  p.push(`L ${xCL - sfDX} ${y2 - sfDY}`);
+
+  // 1-7L: FIX-lidSideFlap ⑦ — y16BotSafe(경계 보장) + bzLidFlap(span 비례 CP), 1-7R과 완전 대칭
+p.push(`C ${xCL - sfDX - (sfDX / sfNorm) * bzLidFlap * 1.3} ${y2 - sfDY - (sfDY / sfNorm) * bzLidFlap * 1.3} ${xSL} ${y16BotSafe + bzLidFlap * 1.3} ${xSL} ${y16BotSafe}`);
   p.push(`L ${x16L} ${y16Top}`);
   p.push(`C ${c15_1x} ${c15_1y} ${c15_2x} ${c15_2y} ${x15eL} ${y15eL}`);
   p.push(`L ${e4L[0]} ${e4L[1]}`);
@@ -433,39 +569,40 @@ function buildBleedPath(cfg, g, d) {
   } = geo;
 
   const sfNorm = Math.sqrt(sfDX * sfDX + sfDY * sfDY);
+ 
   const y16Top = y1 + sfDY + bzTan13;
   const y16Bot = y16Top + TC_V;
 
   // ── 기본 오프셋 ──────────────────────────────────────────────────
-  const by0  = y0 - d,  by5 = y5 + d;
-  const by3  = y3 - d,  by4 = y4 + d;
+  const by0 = y0 - d, by5 = y5 + d;
+  const by3 = y3 - d, by4 = y4 + d;
   const bBLL = xBLL - d, bEnd = xEnd + d;
-  const bFR  = xFR + d,  bSL  = xSL - d;
-  const bdfW     = dfW + d * 1.15;  // ★ 1-3L 처짐 보정
+  const bFR = xFR + d, bSL = xSL - d;
+  const bdfW = dfW + d * 1.15;  // ★ 1-3L 처짐 보정
   const bdfNeckX = bdfW * (dfNeckX / dfW);
-  const bDust73  = dust73 * (bdfW / dfW);  // ★ Y비율 비례
+  const bDust73 = dust73 * (bdfW / dfW);  // ★ Y비율 비례
   const bInsR = xCR + insertW + d, bInsL = xCL - insertW - d;
   const xInsL = xCL - insertW;
   const br19 = r19 + d, bfiR = fiR + d;
   const bneckY = y0 + dROP + dfNY + d;  // ★ 실제 neck Y + 5mm 오프셋
 
-  // lidSideFlap bezier 제어점
+  // lidSideFlap bezier 제어점 (1-5 구간용, 변경 없음)
   const c15R_1x = (xCR + sfDX) + (sfDX / sfNorm) * bzOff;
-  const c15R_1y = (y1 + sfDY)  + (sfDY / sfNorm) * bzOff;
-  const x15eL   = xCL - sfDX,    y15eL = y1 + sfDY;
-  const c15_1x  = xSL,           c15_1y = y16Top - bzTan8;
-  const c15_2x  = x15eL - (sfDX / sfNorm) * bzOff;
-  const c15_2y  = y15eL + (sfDY / sfNorm) * bzOff;
-  const x17sL   = xSL + bzOff,   y17sL = y16Bot + bzTan13;
-  const c17_1x  = x17sL - (sfDX / sfNorm) * bzOff;
-  const c17_1y  = y17sL - (sfDY / sfNorm) * bzOff;
-  const c17_2x  = xSL,           c17_2y = y16Bot + bzTan1;
+  const c15R_1y = (y1 + sfDY) + (sfDY / sfNorm) * bzOff;
+  const x15eL = xCL - sfDX, y15eL = y1 + sfDY;
+  const c15_1x = xSL, c15_1y = y16Top - bzTan8;
+  const c15_2x = x15eL - (sfDX / sfNorm) * bzOff;
+  const c15_2y = y15eL + (sfDY / sfNorm) * bzOff;
+  // FIX-bleed-1-7: c17/x17 계열 제거 — 아래 full parallel offset 으로 교체
+  // FIX-bleed-1-7: bzLidFlap — buildOuterPath 와 동일 기준 (flapSpan chord/3)
+  const flapSpanH = cfg.H - sfDX;
+  const bzLidFlap = Math.sqrt(flapSpanH * flapSpanH + bzTan13 * bzTan13) / 3;
 
   // ★ 대각선 5mm 법선 오프셋 (1-5, 1-14 끝점)
-  const nxD    = sfDY / sfNorm,  nyD = sfDX / sfNorm;
+  const nxD = sfDY / sfNorm, nyD = sfDX / sfNorm;
   const bDiagRx = xCR + sfDX + nxD * d;
   const bDiagLx = xCL - sfDX - nxD * d;
-  const bDiagY  = y1 + sfDY - nyD * d;
+  const bDiagY = y1 + sfDY - nyD * d;
 
   // ★ Neck V apex: 수평 bleed(y=bneckY) 과 대각선 bleed 의 교점 X (클램프 적용)
   const vNeckRxRaw = bDiagRx - sfDX * (bDiagY - bneckY) / sfDY - 5;
@@ -478,11 +615,11 @@ function buildBleedPath(cfg, g, d) {
   // 1-7 bezier 끝 (bFR-bzOff, y16Bot+bzTan13) → straight to (bInsR-br19, y2+neckR)
 
   // lockFlap Y
-  const outerLockTopY    = y3 + foldNotch;
+  const outerLockTopY = y3 + foldNotch;
   const outerLock1StartY = outerLockTopY + outerLockInset;
-  const outerLock1EndY   = outerLock1StartY + outerLockH;
+  const outerLock1EndY = outerLock1StartY + outerLockH;
   const outerLock2StartY = outerLock1EndY + outerLockGap;
-  const outerLock2EndY   = outerLock2StartY + outerLockH;
+  const outerLock2EndY = outerLock2StartY + outerLockH;
   const outerLockBottomY = y4 - foldNotch;
 
 
@@ -505,30 +642,33 @@ function buildBleedPath(cfg, g, d) {
   p.push(`L ${vNeckRx} ${bneckY}`);          // 수평·대각 bleed 교점
   p.push(`L ${bDiagRx} ${bDiagY}`);          // 1-5R 대각선 bleed 시작
 
-// ── [D] lidSideFlap right: 1-5R 베지어 → 수직 → 1-7R 베지어 ──
-const c15R_2x = xFR;
-const c15R_2y = y16Top - bzTan8;
+  // ── [D] lidSideFlap right: 1-5R 베지어 → 수직 → 1-7R 베지어 ──
+  const c15R_2x = xFR;
+  const c15R_2y = y16Top - bzTan8;
 
-p.push(`C ${c15R_1x + nxD * d * 1.2} ${c15R_1y - nyD * d * 1.2} ${bFR} ${y16Top - bzTan8} ${bFR} ${y16Top}`);
-p.push(`L ${bFR} ${y16Bot}`);
+p.push(`C ${c15R_1x + nxD * d} ${c15R_1y - nyD * d} ${bFR} ${y16Top - bzTan8 - d} ${bFR} ${y16Top}`);
+  p.push(`L ${bFR} ${y16Bot}`);
 
-const _n17r = Math.sqrt(bzOff * bzOff + bzTan13 * bzTan13);
-const _nxr = bzTan13 / _n17r, _nyr = bzOff / _n17r;
-const c17R_2x = bFR;                                                         // CP1: 수직접선
-const c17R_2y = y16Bot + bzTan1;
-const c17R_1x = xFR - bzOff + (sfDX / sfNorm) * bzOff + _nxr * d * 1.25;
-const c17R_1y = y16Bot + bzTan13 - (sfDY / sfNorm) * bzOff + _nyr * d * 1.25;
-const ep7Rx = xFR - bzOff + _nxr * d * 1.25;
-const ep7Ry = y16Bot + bzTan13 + _nyr * d * 1.25;
+  // ── FIX-bleed-1-7R ──────────────────────────────────────────────
+  // start+CP1: (+d, 0) — 수직 1-6R과 접선 연속
+  // CP2+end:   (nxD*d, nyD*d) — 대각 끝점의 실제 법선 방향으로 5mm 유지
+  //   (+d,0)만 쓰면 수직거리 = d*nxD ≈ 1.3mm → 너무 근접
+  const bz13 = bzLidFlap * 1.7;
+  p.push(`C ${bFR} ${y16Bot + bz13}` +
+         ` ${xCR + sfDX + (sfDX / sfNorm) * bz13 + nxD * d} ${y2 - sfDY - (sfDY / sfNorm) * bz13 + nyD * d}` +
+         ` ${xCR + sfDX + nxD * d} ${y2 - sfDY + nyD * d}`);
 
-// ── 1-7R: mirror of 1-7L ───────────────────────────────────────
-p.push(`C ${c17R_2x} ${c17R_2y} ${c17R_1x} ${c17R_1y} ${ep7Rx} ${ep7Ry}`);
-
-// ── [E] 1-7R 끝 → 1-9R backInsert ──────────────────────────────
-p.push(`L ${xCR + d + 10} ${y2 - neckR}`);
-p.push(`L ${bInsR - br19} ${y2 - neckR}`);
-p.push(`A ${br19} ${br19} 0 0 1 ${bInsR} ${y2 - neckR + br19}`);
-p.push(`L ${bInsR} ${by3}`);
+  // ── [E] 1-7R 끝 → backInsert V-apex → 1-9R ─────────────────────
+  // ★ 꼭지점 위치 조정: vBot7_NUDGE 값만 바꾸면 됨
+  //   양수(+) → 꼭지가 바깥쪽(오른쪽)으로 이동
+  //   음수(-) → 꼭지가 안쪽(왼쪽)으로 이동
+  const vBot7_NUDGE = -7;  // ← 여기 숫자 조정 (예: 10, 20, -5)
+  const dyVbot7R = Math.max(0, (y2 - neckR) - (y2 - sfDY + nyD * d));
+  const vBot7Rx  = (xCR + sfDX + nxD * d) - sfDX * dyVbot7R / sfDY + vBot7_NUDGE;
+  p.push(`L ${vBot7Rx} ${y2 - neckR}`);
+  p.push(`L ${bInsR - br19} ${y2 - neckR}`);
+  p.push(`A ${br19} ${br19} 0 0 1 ${bInsR} ${y2 - neckR + br19}`);
+  p.push(`L ${bInsR} ${by3}`);
 
   // ── [F] base right + lockFlap right (사다리꼴 3면 5mm) ─────────
   p.push(`L ${xFR} ${by3}`);
@@ -579,14 +719,18 @@ p.push(`L ${bInsR} ${by3}`);
   p.push(`A ${br19} ${br19} 0 0 1 ${xInsL + r19} ${y2 - neckR}`);
 
   // ── [L] 1-9L 끝 → 1-7L 베지어 → 1-5L 대각선 ────────────────
- p.push(`L ${xCL - d - 10} ${y2 - neckR}`);               // ★ V apex 위로
-  const _n17 = Math.sqrt(bzOff*bzOff + bzTan13*bzTan13);
-  const _nx = bzTan13 / _n17, _ny = bzOff / _n17;
-p.push(`L ${x17sL - _nx * d * 1.25} ${y17sL + _ny * d * 1.25}`); // 1-7L베지어곡선
-
-p.push(`C ${c17_1x - _nx * d * 1.25} ${c17_1y + _ny * d * 1.25} ${c17_2x - _nx * d * 1.25} ${c17_2y + _ny * d * 1.25} ${bSL} ${y16Bot}`);
+  // FIX-bleed-1-7L: start+CP1: (-nxD*d, nyD*d) — 대각 시작점 법선 방향 5mm
+  //                 CP2+end:   (-d, 0)           — 수직 1-6L 접선 연속
+  // V-apex = 1-7L 입구방향(+sfDX,+sfDY)과 backInsert bleed 수평(y2−neckR)의 교점 (1-7R mirror)
+  const dyVbot7L = Math.max(0, (y2 - neckR) - (y2 - sfDY + nyD * d));  // = sfDY-neckR-nyD*d
+  const vBot7Lx  = (xCL - sfDX - nxD * d) + sfDX * dyVbot7L / sfDY - vBot7_NUDGE;  // mirror ✓
+  p.push(`L ${vBot7Lx} ${y2 - neckR}`);                              // K 끝 → neck 전이
+  p.push(`L ${xCL - sfDX - nxD * d} ${y2 - sfDY + nyD * d}`);       // 1-7L bleed start (법선 5mm)
+  p.push(`C ${xCL - sfDX - (sfDX / sfNorm) * bz13 - nxD * d} ${y2 - sfDY - (sfDY / sfNorm) * bz13 + nyD * d}` +
+         ` ${bSL} ${y16Bot + bz13}` +
+         ` ${bSL} ${y16Bot}`);
   p.push(`L ${bSL} ${y16Top}`);
-p.push(`C ${bSL} ${y16Top - bzTan8} ${c15_2x - nxD * d * 1.3} ${c15_2y - nyD * d * 1.3} ${bDiagLx} ${bDiagY}`);
+ p.push(`C ${bSL} ${y16Top - bzTan8 - d} ${c15_2x - nxD * d} ${c15_2y - nyD * d} ${bDiagLx} ${bDiagY}`);
 
 
   // ── [M] neck left V-apex → neck 수평 ────────────────────────
@@ -604,14 +748,108 @@ p.push(`C ${bSL} ${y16Top - bzTan8} ${c15_2x - nxD * d * 1.3} ${c15_2y - nyD * d
 function getBounds(outerPath, foldLines, slots, holes) {
   const nums = outerPath.match(/-?\d+(\.\d+)?/g) || [];
   const xs = [], ys = [];
-  for (let i = 0; i < nums.length - 1; i += 2) { xs.push(+nums[i]); ys.push(+nums[i + 1]); }
-  foldLines.forEach(l => { xs.push(l.x1, l.x2); ys.push(l.y1, l.y2); });
-  slots.forEach(s => { xs.push(s.x, s.x + s.w); ys.push(s.y, s.y + s.h); });
-  holes.forEach(h => { xs.push(h.cx - h.r, h.cx + h.r); ys.push(h.cy - h.r, h.cy + h.r); });
+
+  for (let i = 0; i < nums.length - 1; i += 2) {
+    xs.push(+nums[i]);
+    ys.push(+nums[i + 1]);
+  }
+
+  foldLines.forEach(l => {
+    xs.push(l.x1, l.x2);
+    ys.push(l.y1, l.y2);
+  });
+
+  slots.forEach(s => {
+    xs.push(s.x, s.x + s.w);
+    ys.push(s.y, s.y + s.h);
+  });
+
+  holes.forEach(h => {
+    xs.push(h.cx - h.r, h.cx + h.r);
+    ys.push(h.cy - h.r, h.cy + h.r);
+  });
+
   return {
-    minX: Math.min(...xs), minY: Math.min(...ys),
-    width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys)
+    minX: Math.min(...xs),
+    minY: Math.min(...ys),
+    width: Math.max(...xs) - Math.min(...xs),
+    height: Math.max(...ys) - Math.min(...ys)
   };
+}
+
+function buildDimensionLines(cfg, g, bounds) {
+  const { W, D, H } = cfg;
+  const { xCL, xCR, y2, y3, y4 } = g;
+
+  const dim = [];
+
+  function hDim(x1, x2, y, label) {
+    dim.push(`
+    <line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}"
+      stroke="#111" stroke-width="0.35"
+      marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <text x="${(x1 + x2) / 2}" y="${y - 2}"
+      font-size="5.5" text-anchor="middle">${label}</text>
+  `);
+  }
+
+  function vDim(x, y1, y2, label) {
+    dim.push(`
+    <line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"
+      stroke="#111" stroke-width="0.35"
+      marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <text x="${x - 5}" y="${(y1 + y2) / 2}"
+      font-size="5.5"
+      transform="rotate(-90 ${x - 5} ${(y1 + y2) / 2})"
+      text-anchor="middle">${label}</text>
+  `);
+  }
+
+  function hDimInside(x1, x2, y, label) {
+    const mid = (x1 + x2) / 2;
+    const pad = 2;
+    const gap = 18;
+
+    dim.push(`
+    <line x1="${x1 + pad}" y1="${y}" x2="${mid - gap}" y2="${y}"
+      stroke="#111" stroke-width="0.35"
+      marker-start="url(#arrow)"/>
+
+    <line x1="${x2 - pad}" y1="${y}" x2="${mid + gap}" y2="${y}"
+      stroke="#111" stroke-width="0.35"
+      marker-start="url(#arrow)"/>
+
+    <text x="${mid}" y="${y + 2.5}" font-size="7" font-weight="600" text-anchor="middle">${label}</text>
+  `);
+  }
+
+  function vDimInside(x, y1, y2, label) {
+    const mid = (y1 + y2) / 2;
+    const pad = 2;
+    const gap = 18;
+
+    dim.push(`
+    <line x1="${x}" y1="${y1 + pad}" x2="${x}" y2="${mid - gap}"
+      stroke="#111" stroke-width="0.35"
+      marker-start="url(#arrow)"/>
+
+    <line x1="${x}" y1="${y2 - pad}" x2="${x}" y2="${mid + gap}"
+      stroke="#111" stroke-width="0.35"
+      marker-start="url(#arrow)"/>
+
+    <text x="${x + 2.5}" y="${mid}"
+      font-size="7" font-weight="600"
+      transform="rotate(-90 ${x + 2.5} ${mid})"
+      text-anchor="middle">${label}</text>
+  `);
+  }
+
+
+  hDimInside(xCL, xCR, y4 - 18, `W ${W}`);
+  vDimInside(xCR - 18, y3, y4, `D ${D}`);
+  vDimInside(xCR - 35, y2, y3, `H ${H}`);
+
+  return `<g id="layer-dimensions">${dim.join('')}</g>`;
 }
 
 // ── SVG render ────────────────────────────────────────────────
@@ -628,13 +866,20 @@ function renderSVG(cfg) {
 
   let svg = `<svg id="mainSvg" xmlns="http://www.w3.org/2000/svg"
     viewBox="${vbX} ${vbY} ${vbW} ${vbH}" width="${vbW}mm" height="${vbH}mm">
-    <defs><style>
+    <defs>
+<marker id="arrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto-start-reverse">
+  <path d="M0,0 L10,5 L0,10 Z" fill="#111"/>
+</marker>
+<style>
       .thomson{fill:#ffffff;stroke:#cc0000;stroke-width:0.45;stroke-linejoin:round;stroke-linecap:round;}
       .fold{fill:none;stroke:#1d6fe8;stroke-width:0.35;stroke-dasharray:2 1.6;}
       .slot{fill:none;stroke:#e53935;stroke-width:0.45;}
       .hole{fill:none;stroke:#1f8f4f;stroke-width:0.45;}
       .bleed{fill:none;stroke:#0055ff;stroke-width:0.45;stroke-linejoin:round;stroke-linecap:round;}
-      text{font-family:Arial,sans-serif;pointer-events:none;}
+      text{
+  font-family:"Arial Rounded MT Bold","Pretendard","Noto Sans KR",Arial,sans-serif;
+  pointer-events:none;
+}
     </style></defs>
     
     <rect x="${vbX}" y="${vbY}" width="${vbW}" height="${vbH}" fill="#d0d0d0" stroke="none"/>
@@ -646,33 +891,76 @@ function renderSVG(cfg) {
     
     <g id="layer-fold">`;
 
-  foldLines.forEach(l => svg += `<line class="fold" x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}"/>`);
-  svg += `</g>`;
+  if (state.showFolds) {
+  foldLines.forEach(l => {
+    svg += `<line class="fold" x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}"/>`;
+  });
+}
+
+svg += `</g>`;
+
   if (state.showSlots) slots.forEach(s => svg += `<path class="slot" d="${roundRectPath(s.x, s.y, s.w, s.h, 2.5)}"/>`);
   if (state.showHoles) holes.forEach(h => svg += `<path class="hole" d="${circlePath(h.cx, h.cy, h.r)}"/>`);
   if (state.showLabels) {
     const { xCL, xCR, xSL, y0, y1, y2, y3, y4 } = g;
     const { H, LH, D, BIH, FIH, BLW } = cfg;
-    [{ name: 'lidFront', x: xCL, y: y0, w: xCR - xCL, h: H }, { name: 'lid', x: xCL, y: y1, w: xCR - xCL, h: LH },
-    { name: 'back', x: xCL, y: y2, w: xCR - xCL, h: H }, { name: 'base', x: xCL, y: y3, w: xCR - xCL, h: D },
-    { name: 'front', x: xCL, y: y4, w: xCR - xCL, h: H }, { name: 'sidePanelLeft', x: xSL, y: y3, w: H, h: D },
-    { name: 'sidePanelRight', x: xCR, y: y3, w: H, h: D }, { name: 'lidSideFlapLeft', x: xSL, y: y1, w: H, h: LH },
-    { name: 'lidSideFlapRight', x: xCR, y: y1, w: H, h: LH }, { name: 'dustFlapLeft', x: xSL, y: y0, w: H, h: H },
-    { name: 'dustFlapRight', x: xCR, y: y0, w: H, h: H }, { name: 'backInsertL', x: xSL, y: y2, w: H, h: BIH },
-    { name: 'backInsertR', x: xCR, y: y2, w: H, h: BIH }, { name: 'frontInsertL', x: xSL, y: y4, w: H, h: FIH },
-    { name: 'frontInsertR', x: xCR, y: y4, w: H, h: FIH }, { name: 'lockFlapLeft', x: g.xBLL, y: y3, w: BLW, h: D },
-    { name: 'lockFlapRight', x: g.xBLR, y: y3, w: BLW, h: D }
+    [{ name: 'lidFront', x: xCL, y: y0, w: xCR - xCL, h: H },
+    { name: 'lid', x: xCL, y: y1, w: xCR - xCL, h: LH },
+    { name: 'back', x: xCL, y: y2, w: xCR - xCL, h: H },
+    { name: 'base', x: xCL, y: y3, w: xCR - xCL, h: D },
+    { name: 'front', x: xCL, y: y4, w: xCR - xCL, h: H },
+    { name: 'sidePL', x: xSL, y: y3, w: H, h: D },
+    { name: 'sidePR', x: xCR, y: y3, w: H, h: D },
+    { name: 'lidSFL', x: xSL, y: y1, w: H, h: LH },
+    { name: 'lidSFR', x: xCR, y: y1, w: H, h: LH },
+    { name: 'dustFL', x: xSL, y: y0, w: H, h: H },
+    { name: 'dustFR', x: xCR, y: y0, w: H, h: H },
+    { name: 'backInsL', x: xSL, y: y2, w: H, h: BIH },
+    { name: 'backInsR', x: xCR, y: y2, w: H, h: BIH },
+    { name: 'frontInsL', x: xSL, y: y4, w: H, h: FIH },
+    { name: 'frontInsR', x: xCR, y: y4, w: H, h: FIH },
+    { name: 'lockFlapL', x: g.xBLL, y: y3, w: BLW, h: D },
+    { name: 'lockFlapR', x: g.xBLR, y: y3, w: BLW, h: D }
     ].forEach(l => {
       const cx = l.x + l.w / 2, cy = l.y + l.h / 2;
       const minDim = Math.min(l.w, l.h);
-      const fs = Math.max(3, Math.min(8, minDim * 0.065));
-      if (minDim < fs * 2) return;  // 패널 너무 작으면 숨김
-      const rot = l.h > l.w ? `transform="rotate(-90 ${cx} ${cy})"` : '';
+      const fs = 7;
+      if (minDim < 12) return;// 패널 너무 작으면 숨김
+    const rot = '';
       svg += `<text x="${cx}" y="${cy}" fill="#333" font-size="${fs}" text-anchor="middle" dominant-baseline="middle" ${rot}>${l.name}</text>`;
     });
   }
-  svg += `</g></svg>`;
-  return svg;
+
+if (state.showDims) {
+  svg += buildDimensionLines(cfg, g, bounds);
+}
+
+// 🔽 워터마크 추가
+const watermark = `
+<defs>
+  <pattern id="wm" patternUnits="userSpaceOnUse" width="140" height="100" patternTransform="rotate(-25)">
+    <text x="24" y="60"
+      font-size="22"
+      font-family="Arial, sans-serif"
+      font-weight="700"
+      fill="#999"
+      opacity="0.12">
+      PacVu
+    </text>
+  </pattern>
+</defs>
+
+<rect x="-5000" y="-5000"
+      width="10000"
+      height="10000"
+      fill="url(#wm)"
+      pointer-events="none" />
+`;
+
+svg += watermark;
+
+svg += '</svg>';
+return svg;
 }
 
 // ============================================================
@@ -682,21 +970,100 @@ function renderSVG(cfg) {
 // ── Render loop ───────────────────────────────────────────────
 let renderTimer = null;
 
+function validateDimensions(W, D, H) {
+  const minBase = Math.min(W, D);
+  const ratio = H / minBase;
+
+  let warningBox = document.getElementById("dimensionWarning");
+  const hInput = document.getElementById("panelH");
+
+  // 최초 생성
+  if (!warningBox) {
+    warningBox = document.createElement("div");
+    warningBox.id = "dimensionWarning";
+
+    // 스타일 (텍스트형)
+warningBox.style.marginTop = "8px";
+warningBox.style.padding = "6px 4px";
+warningBox.style.background = "transparent";
+warningBox.style.border = "none";
+
+warningBox.style.fontSize = "11px";
+warningBox.style.lineHeight = "1.5";
+warningBox.style.fontWeight = "400";
+
+warningBox.style.width = "100%";
+warningBox.style.display = "block";
+
+/* 핵심 */
+warningBox.style.whiteSpace = "nowrap";
+
+    // 핵심: 넓은 섹션에 붙이기
+    const section =
+      hInput.closest(".option-card") ||
+      hInput.closest(".setting-card") ||
+      hInput.closest(".control-card") ||
+      hInput.closest(".panel-card") ||
+      hInput.closest(".panel-section") ||
+      hInput.parentElement;
+
+    section.appendChild(warningBox);
+  }
+
+  // 에러 (렌더 막기)
+  if (ratio > 0.8) {
+    warningBox.style.display = "block";
+    warningBox.style.color = "#d93025";
+    warningBox.textContent =
+      "⚠️비율 초과: H를 낮추거나 W/D를 높혀주세요.";
+
+    if (hInput) hInput.style.border = "1px solid #d93025";
+    return false;
+  }
+
+  // ⚠️ 경고 (렌더 허용)
+  if (ratio > 0.65) {
+    warningBox.style.display = "block";
+    warningBox.style.color = "#e37400";
+    warningBox.textContent =
+      "주의: 비율이 높아 형태가 변형될 수 있습니다.";
+
+    if (hInput) hInput.style.border = "1px solid #e37400";
+    return true;
+  }
+
+  // ✅ 정상
+  warningBox.style.display = "none";
+  warningBox.textContent = "";
+
+  if (hInput) hInput.style.border = "1px solid #ddd";
+  return true;
+}
+
 function render(forceFit = false) {
-  const cfg = getCfg(), svgStr = renderSVG(cfg);
+  const cfg = getCfg();
+
+// 비율 경고 표시
+validateDimensions(cfg.W, cfg.D, cfg.H);
+
+  const svgStr = renderSVG(cfg);
   state.currentSVGString = svgStr;
+
   const host = document.getElementById('svgHost');
   if (!host) return;
+
   host.innerHTML = svgStr;
   state.baseVB = null;  // 새 SVG 삽입 후 기준 viewBox 리셋
-if (forceFit || !state.fitInitialized) {
-  state.panX = 0;
-  state.panY = 0;
 
-  fitToScreen(cfg);
-  state.fitInitialized = true;
-}
-  else applyTransform();
+  if (forceFit || !state.fitInitialized) {
+    state.panX = 0;
+    state.panY = 0;
+
+    fitToScreen(cfg);
+    state.fitInitialized = true;
+  } else {
+    applyTransform();
+  }
 }
 
 // debounce 180ms — 연속 입력 시 중간 상태 노출 방지
@@ -727,22 +1094,22 @@ function applyTransform() {
 
   // <g> transform은 사용하지 않음 (viewBox가 모든 변환 담당)
   const g = document.getElementById('mainGroup') ||
-            document.getElementById('viewportGroup') ||
-            document.querySelector('#mainSvg g');
+    document.getElementById('viewportGroup') ||
+    document.querySelector('#mainSvg g');
   if (g) g.removeAttribute('transform');
 
   const sb = document.getElementById('statusBox');
   if (sb) sb.textContent = `Zoom ${Math.round(state.zoom * 100)}%`;
 }
 
-function fitToScreen(cfg){
+function fitToScreen(cfg) {
   requestAnimationFrame(() => {
-    const sv   = document.getElementById('mainSvg');
+    const sv = document.getElementById('mainSvg');
     const host = document.getElementById('svgHost');
     if (!sv || !host) return;
 
     // ① SVG가 svgHost를 100% 채우게 설정
-    sv.setAttribute('width',  '100%');
+    sv.setAttribute('width', '100%');
     sv.setAttribute('height', '100%');
 
     // ② svgHost 실제 픽셀 크기
@@ -750,25 +1117,25 @@ function fitToScreen(cfg){
     if (!hr.width || !hr.height) return;
 
     // ③ 도형 전체 bounds 계산
-    const c      = cfg || getCfg();
-    const g2     = getGrid(c);
+    const c = cfg || getCfg();
+    const g2 = getGrid(c);
     const bounds = getBounds(
       buildOuterPath(c, g2), buildFoldLines(c, g2),
-      buildSlots(c, g2),     buildHoles(c, g2)
+      buildSlots(c, g2), buildHoles(c, g2)
     );
 
     // ④ 화면에 꽉 차도록 scale 계산 (여백 40px)
-    const pad    = 40;
-    const scaleX = (hr.width  - pad * 2) / bounds.width;
+    const pad = 40;
+    const scaleX = (hr.width - pad * 2) / bounds.width;
     const scaleY = (hr.height - pad * 2) / bounds.height;
-    const scale  = Math.min(scaleX, scaleY);
+    const scale = Math.min(scaleX, scaleY);
 
     // ⑤ viewBox 크기 = 화면 크기 / scale  (SVG 단위 = mm)
-    const vbW = hr.width  / scale;
+    const vbW = hr.width / scale;
     const vbH = hr.height / scale;
 
     // ⑥ 도형 중심을 viewBox 중심으로 → 정중앙
-    const contentCX = bounds.minX + bounds.width  / 2;
+    const contentCX = bounds.minX + bounds.width / 2;
     const contentCY = bounds.minY + bounds.height / 2;
     const vbX = contentCX - vbW / 2;
     const vbY = contentCY - vbH / 2;
@@ -784,14 +1151,14 @@ function fitToScreen(cfg){
 
     // ⑨ <g> transform 제거
     const g = document.getElementById('mainGroup') ||
-              document.getElementById('viewportGroup') ||
-              document.querySelector('#mainSvg g');
+      document.getElementById('viewportGroup') ||
+      document.querySelector('#mainSvg g');
     if (g) g.removeAttribute('transform');
 
     const sb = document.getElementById('statusBox');
     if (sb) sb.textContent = 'Zoom 100%';
   });
-  }
+}
 
 
 const ZOOM_STEPS = [0.5, 1.0, 1.5, 2.0];
@@ -841,21 +1208,114 @@ function svgToDXF(cfg) {
 // ⑫ UI BINDINGS / INIT
 // ============================================================
 
+
+
+// ── Package Library Select ───────────────────────────────────
+function initBoxLibrarySelect() {
+  const categoryEl = document.getElementById('boxCategory');
+  const typeEl = document.getElementById('boxType');
+  if (!categoryEl || !typeEl) return;
+
+  categoryEl.innerHTML = '';
+  BOX_LIBRARY.forEach(category => {
+    const opt = document.createElement('option');
+    opt.value = category.categoryKey;
+    opt.textContent = category.categoryLabel;
+    categoryEl.appendChild(opt);
+  });
+
+  const fillTypeSelect = () => {
+    const category = BOX_LIBRARY.find(c => c.categoryKey === categoryEl.value) || BOX_LIBRARY[0];
+    typeEl.innerHTML = '';
+
+    if (!category.items.length) {
+      const empty = document.createElement('option');
+      empty.value = '';
+      empty.textContent = '준비 중';
+      typeEl.appendChild(empty);
+      selectedBoxMeta = { categoryKey: category.categoryKey, engineKey: '', variantKey: '' };
+      return;
+    }
+
+    category.items.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = `${item.engineKey}:${item.variantKey}`;
+      opt.textContent = item.label;
+      opt.dataset.engine = item.engineKey;
+      opt.dataset.variant = item.variantKey;
+      opt.dataset.fefco = item.fefcoCode;
+      opt.dataset.koreanName = item.koreanName;
+      typeEl.appendChild(opt);
+    });
+
+    const first = category.items[0];
+    selectedBoxMeta = {
+      categoryKey: category.categoryKey,
+      engineKey: first.engineKey,
+      variantKey: first.variantKey,
+      fefcoCode: first.fefcoCode,
+      koreanName: first.koreanName
+    };
+  };
+
+  categoryEl.addEventListener('change', () => {
+    fillTypeSelect();
+    scheduleRender();
+  });
+
+  typeEl.addEventListener('change', () => {
+    const opt = typeEl.selectedOptions[0];
+    selectedBoxMeta = {
+      categoryKey: categoryEl.value,
+      engineKey: opt?.dataset.engine || '',
+      variantKey: opt?.dataset.variant || '',
+      fefcoCode: opt?.dataset.fefco || '',
+      koreanName: opt?.dataset.koreanName || ''
+    };
+    scheduleRender();
+  });
+
+  categoryEl.value = 'mailer';
+  fillTypeSelect();
+}
+
 // ── Bindings ──────────────────────────────────────────────────
 // 'input' 이벤트에서 render 호출 제거 → 중간 상태 노출 방지
 // 'change' + debounce 180ms 만 사용
 function bindAll() {
+  initBoxLibrarySelect();
   document.querySelectorAll('input[type=number]').forEach(el => el.addEventListener('change', scheduleRender));
   const get = id => document.getElementById(id);
+
+  get('showDims')?.addEventListener('change', e => {
+    state.showDims = e.target.checked;
+    render(true);
+  });
+
+get('showHoles')?.addEventListener('change', e => {
+  state.showHoles = e.target.checked;
+  render(true);
+});
+
+get('showFolds')?.addEventListener('change', e => {
+  state.showFolds = e.target.checked;
+  render(true);
+});
+
+get('showLabels')?.addEventListener('change', e => {
+  state.showLabels = e.target.checked;
+  render(true);
+});
+
   get('fitBtn')?.addEventListener('click', () => fitToScreen());
 
-get('zoomInBtn')?.addEventListener('click', () => {
-  zoomAt(snapZoom(state.zoom, +1));
-});
+  get('zoomInBtn')?.addEventListener('click', () => {
+    zoomAt(snapZoom(state.zoom, +1));
+  });
 
-get('zoomOutBtn')?.addEventListener('click', () => {
-  zoomAt(snapZoom(state.zoom, -1));
-});
+  get('zoomOutBtn')?.addEventListener('click', () => {
+    zoomAt(snapZoom(state.zoom, -1));
+  });
 
   get('downloadSvgBtn')?.addEventListener('click', () => downloadFile('pacvu-g-type.svg', state.currentSVGString, 'image/svg+xml'));
   get('downloadDxfBtn')?.addEventListener('click', () => downloadFile('pacvu-g-type.dxf', svgToDXF(getCfg()), 'application/dxf'));
@@ -877,13 +1337,13 @@ get('zoomOutBtn')?.addEventListener('click', () => {
   window.addEventListener('mouseup', () => { state.isDragging = false; host.classList.remove('dragging'); });
 
   host.addEventListener('wheel', e => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const zoomFactor = Math.exp(-e.deltaY * 0.0015);
-  const newZoom = state.zoom * zoomFactor;
+    const zoomFactor = Math.exp(-e.deltaY * 0.0015);
+    const newZoom = state.zoom * zoomFactor;
 
-  zoomAt(newZoom);
-}, { passive: false });
+    zoomAt(newZoom);
+  }, { passive: false });
 
   host.addEventListener('dblclick', () => fitToScreen());
   window.addEventListener('resize', () => fitToScreen());
