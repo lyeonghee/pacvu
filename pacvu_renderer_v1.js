@@ -1456,3 +1456,6 @@ get('downloadDxfBtn')?.addEventListener('click', () => {
 bindAll();
 render(true);
 
+if (window.innerWidth < 768) {
+  fitToScreen();
+}
