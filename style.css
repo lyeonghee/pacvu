@@ -1,0 +1,320 @@
+ * {
+   box-sizing: border-box;
+ }
+
+ html,
+ body {
+   margin: 0;
+   height: 100%;
+   font-family: Arial, "Noto Sans KR", sans-serif;
+   background: #e8e8e8;
+   color: #1f1f1f;
+ }
+
+ .app {
+   display: flex;
+   height: 100vh;
+   overflow: hidden;
+ }
+
+ .sidebar {
+   width: 300px;
+   min-width: 300px;
+   background: #fff;
+   border-right: 1px solid #ddd;
+   display: flex;
+   flex-direction: column;
+   transition: width 0.25s, min-width 0.25s;
+   overflow: hidden;
+ }
+
+ .sidebar.collapsed {
+   width: 0;
+   min-width: 0;
+   border-right: 0;
+ }
+
+ .sidebar-inner {
+   padding: 14px 12px 18px;
+   overflow-y: auto;
+   height: 100%;
+ }
+
+ .sidebar h1 {
+   margin: 0 0 4px;
+   font-size: 18px;
+ }
+
+ .sidebar p.sub {
+   margin: 0 0 10px;
+   color: #888;
+   font-size: 11px;
+ }
+
+ .top-actions {
+   display: flex;
+   gap: 6px;
+   margin-bottom: 10px;
+   flex-wrap: wrap;
+ }
+
+ .btn {
+   border: 0;
+   border-radius: 8px;
+   padding: 8px 11px;
+   font-size: 12px;
+   font-weight: 700;
+   cursor: pointer;
+   background: #111;
+   color: #fff;
+ }
+
+ .btn.light {
+   background: #f0f0f0;
+   color: #222;
+   border: 1px solid #ccc;
+ }
+
+ .btn.sec {
+   background: #555;
+ }
+
+ details.group {
+   border: 1px solid #e0e0e0;
+   border-radius: 10px;
+   background: #fafafa;
+   margin-bottom: 10px;
+   overflow: hidden;
+ }
+
+ details.group>summary {
+   list-style: none;
+   cursor: pointer;
+   padding: 10px 12px;
+   font-size: 13px;
+   font-weight: 700;
+   user-select: none;
+   position: relative;
+ }
+
+ details.group>summary::-webkit-details-marker {
+   display: none;
+ }
+
+ details.group>summary::after {
+   content: "▾";
+   position: absolute;
+   right: 10px;
+   top: 9px;
+   font-size: 12px;
+   color: #888;
+ }
+
+ .group-body {
+   padding: 0 10px 10px;
+ }
+
+ .row {
+   display: grid;
+   grid-template-columns: 1fr 80px;
+   gap: 6px;
+   align-items: center;
+   margin-bottom: 6px;
+ }
+
+ .row label {
+   font-size: 11px;
+   color: #444;
+ }
+
+ .row input {
+   width: 100%;
+   padding: 6px 7px;
+   border-radius: 6px;
+   border: 1px solid #ccc;
+   font-size: 11px;
+ }
+
+ .hint {
+   font-size: 10px;
+   color: #999;
+   margin-top: 6px;
+   line-height: 1.6;
+ }
+
+.bleed-fill{
+  fill:none;
+  stroke:#0055ff;
+  stroke-width:10;
+  stroke-linejoin:round;
+  stroke-linecap:round;
+}
+
+.thomson{
+  fill:#ffffff;
+  stroke:#cc0000;
+  stroke-width:0.45;
+}
+
+ .viewer-wrap {
+   flex: 1;
+   position: relative;
+   background: #d0d0d0;
+   overflow: hidden;
+ }
+
+ .toolbar {
+   position: absolute;
+   top: 12px;
+   left: 12px;
+   z-index: 20;
+   display: flex;
+   gap: 6px;
+   flex-wrap: wrap;
+ }
+
+ .legend {
+   position: absolute;
+   top: 12px;
+   right: 12px;
+   z-index: 20;
+   background: rgba(255, 255, 255, 0.95);
+   border: 1px solid #ddd;
+   border-radius: 8px;
+   padding: 7px 10px;
+   font-size: 11px;
+   line-height: 1.9;
+ }
+
+ .legend .ln {
+   display: inline-block;
+   width: 18px;
+   height: 2px;
+   vertical-align: middle;
+   margin-right: 5px;
+ }
+
+ .status {
+   position: absolute;
+   right: 12px;
+   bottom: 12px;
+   z-index: 20;
+   background: rgba(255, 255, 255, 0.92);
+   border: 1px solid #ddd;
+   border-radius: 8px;
+   padding: 6px 10px;
+   font-size: 11px;
+   color: #666;
+ }
+
+ #svgHost {
+   width: 100%;
+   height: 100%;
+   cursor: grab;
+   user-select: none;
+   overflow: hidden;
+ }
+
+ #svgHost.dragging {
+   cursor: grabbing;
+ }
+ /* ===== select UI 확장 ===== */
+
+.row {
+  grid-template-columns: 82px 1fr;
+}
+
+.row select {
+  width: 100%;
+  height: 28px;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 11px;
+}
+/* ===== OPTION GRID ===== */
+
+.option-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 4px 0 10px;
+}
+
+/* 라벨 박스 */
+.option-grid label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 8px;
+  border: 1px solid #e2e2e2;
+  border-radius: 7px;
+  background: #fafafa;
+  font-size: 11px;
+  color: #555;
+  cursor: pointer;
+}
+
+/* 텍스트 */
+.option-grid span {
+  font-weight: 400;
+  letter-spacing: 0.2px;
+  color: #666;
+}
+
+/* ===== 스위치 ===== */
+
+.option-grid input[type="checkbox"] {
+  appearance: none;
+  width: 28px;
+  height: 15px;
+  border-radius: 999px;
+  background: #d8d8d8;   /* OFF */
+  border: 1px solid #cfcfcf;
+  cursor: pointer;
+  position: relative;
+  transition: 0.18s;
+}
+
+/* 스위치 동그라미 */
+.option-grid input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  left: 1px;
+  top: 1px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,.18);
+  transition: 0.18s;
+}
+
+/* ON 상태 */
+.option-grid input[type="checkbox"]:checked {
+  background: #666;   /* 중립 회색 */
+  border-color: #666;
+}
+
+/* 동그라미 이동 */
+.option-grid input[type="checkbox"]:checked::after {
+  transform: translateX(13px);
+}
+
+/* ON일 때 텍스트 강조 */
+.option-grid label:has(input:checked) span {
+  color: #333;
+  font-weight: 500;
+}
+
+/* ===== 소제목 ===== */
+
+.mini-title {
+  margin: 8px 0 5px;
+  padding-top: 6px;
+  border-top: 1px solid #eee;
+  font-size: 10px;
+  font-weight: 700;
+  color: #777;
+}

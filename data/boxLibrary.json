@@ -1,0 +1,80 @@
+[
+  { "categoryKey":"bakery_hinged", "categoryLabel":"01 Bakery hinged box", "items":[] },
+  { "categoryKey":"gable",         "categoryLabel":"02 Gable box",         "items":[] },
+  {
+    "categoryKey":"tuck",
+    "categoryLabel":"03 Tuck box",
+    "items":[
+      {
+        "label":"B형 타입 / 택배박스 기본형",
+        "koreanName":"B형 타입",
+        "fefcoCode":"0201",
+        "engineKey":"abox",
+        "variantKey":"default",
+        "defaultDims":{ "W":235, "D":229, "H":91 }
+      },
+      {
+        "label":"B형 타입 / 기본 칼라박스",
+        "koreanName":"B형 타입",
+        "fefcoCode":"0471",
+        "engineKey":"bbox",
+        "variantKey":"default",
+        "defaultDims":{ "W":57, "D":57, "H":177 }
+      }
+    ]
+  },
+  {
+    "categoryKey":"mailer",
+    "categoryLabel":"04 Mailer box",
+    "items":[
+      {
+        "label":"G-Type Standard (교박스기본)",
+        "koreanName":"G형 기본형",
+        "fefcoCode":"0427",
+        "engineKey":"gbox",
+        "variantKey":"default",
+        "defaultDims":{ "W":235, "D":229, "H":91 }
+      },
+      {
+        "label":"G-Type Lock (락 구조)",
+        "koreanName":"G형 락형",
+        "fefcoCode":"0427",
+        "engineKey":"gbox",
+        "variantKey":"lock",
+        "defaultDims":{ "W":235, "D":229, "H":91 }
+      }
+    ]
+  },
+  { "categoryKey":"handle",      "categoryLabel":"05 Handle box",      "items":[] },
+  {
+    "categoryKey":"rrp_display",
+    "categoryLabel":"06 RRP display box",
+    "items":[
+      {
+        "label":"RRP 기본형 / 진열형 박스",
+        "koreanName":"RRP 타입",
+        "fefcoCode":"확인 필요",
+        "engineKey":"rrpbox",
+        "variantKey":"default",
+        "defaultDims":{ "W":235, "D":229, "H":91 }
+      }
+    ]
+  },
+  { "categoryKey":"sleeve",   "categoryLabel":"07 Sleeve box",   "items":[] },
+  { "categoryKey":"drawer",   "categoryLabel":"08 Drawer box",   "items":[] },
+  { "categoryKey":"cake",     "categoryLabel":"09 Cake box",     "items":[] },
+  {
+    "categoryKey":"shipping",
+    "categoryLabel":"10 Shipping box",
+    "items":[
+      {
+        "label":"A형 타입 / 일반 RSC 택배박스",
+        "koreanName":"A형 택배박스",
+        "fefcoCode":"0201",
+        "engineKey":"rbox",
+        "variantKey":"default",
+        "defaultDims":{ "W":285, "D":170, "H":120 }
+      }
+    ]
+  }
+]
