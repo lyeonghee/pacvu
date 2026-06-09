@@ -1,115 +1,73 @@
-// ============================================================
-// T001_spec.js — B-Type Tuck End Box
-// T001_getSpec(W, D, H) → spec 객체 반환
-//
-// 기준: 57×57×177mm, Geometry Lock v1.5
-// 규칙: 단순 산술 계산만 / var 통일 / 에러 발생 없음 보장
-// bezier CP는 layout에서 계산
+﻿// ============================================================
+// T001_spec.js - B-Type tuck box parametric geometry
 // ============================================================
 
-function T001_getSpec(W, D, H) {
+function T001_clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
 
-  /* ── X 기준선 ─────────────────────────────────────────────── */
-  var xP1  = D * (25.0   / 57);
-  var xP2  = xP1 + D;
-  var xP3  = xP2 + W;
-  var xP4  = xP3 + D;
-  var xEnd = xP4 + D * (55.504 / 57);
+function T001_getSpec(input) {
+  const W = Number(input && input.W) || 57;
+  const D = Number(input && input.D) || 57;
+  const H = Number(input && input.H) || 177;
+  const minPanel = Math.max(1, Math.min(W, D));
 
-  var xTC       = (xP1 + xP2) / 2;
-  var tuckFlatH = D * (16.381 / 57);   /* tuck cap half-width */
-  var xTFL      = xTC - tuckFlatH;
-  var xTFR      = xTC + tuckFlatH;
+  const glueWidth = T001_clamp(D * 0.44, 12, Math.max(14, W * 0.55));
+  const lidTopHeight = D;
+  const tuckHeight = T001_clamp(D * 0.40, 14, Math.max(18, H * 0.45));
+  const lidFlapHeight = T001_clamp(D * 0.49, 12, Math.max(18, H * 0.45));
+  const bottomLockDepth = T001_clamp(D * 0.76, 20, Math.max(24, H * 0.65));
 
-  /* ── Y 기준선 ─────────────────────────────────────────────── */
-  var yTF = D * (23.0  / 57);
-  var yLF = yTF + D;
-  var yBB = yLF + H;
-  var yLO = yBB + D * (43.5 / 57);
+  const lockStep = T001_clamp(D * 0.055, 2, 12);
+  const lockCornerRadius = T001_clamp(D * 0.07, 2, 16);
+  const lockAOuter = T001_clamp(D * 0.235, 6, W * 0.38);
+  const lockAInner = T001_clamp(D * 0.305, lockAOuter + 2, W * 0.45);
+  const lockBDiagWidth = T001_clamp(D * 0.325, 8, W * 0.42);
+  const lockBGapHalf = T001_clamp(D * 0.105, 3, W * 0.18);
+  const lockSideDiagX = T001_clamp(D * 0.53, 12, D * 0.82);
+  const lockSideDiagY = T001_clamp(D * 0.325, 8, bottomLockDepth * 0.75);
 
-  var yTS     = D * (10.898 / 57);     /* tuck straight top */
-  var yGD     = D * (6.699  / 57);     /* glue slope delta  */
-  var yLSFTop = yLF - D * (28.0 / 57);/* lid side flap top */
-  var yLF2    = yTF + D * (56.0 / 57);/* f-2 fold y (=79mm for D=57) */
+  const neckWidth = T001_clamp(D * 0.32, 12, W * 0.55);
+  const neckHeight = T001_clamp(D * 0.14, 5, lidFlapHeight * 0.55);
+  const notchWidth = T001_clamp(D * (18 / 57), 12, Math.min(W * 0.42, D * 0.38, 70));
+  const notchDepth = T001_clamp(D * (8 / 57), 4, Math.min(D * 0.18, H * 0.22, 32));
+  const notchRadius = notchWidth / 2;
+  const cornerRadius = T001_clamp(minPanel * 0.045, 1.5, 10);
 
-  /* ── Neck ─────────────────────────────────────────────────── */
-  var xNeckC   = (xP3 + xP4) / 2;
-  var halfNeckW = W * (9.0 / 57);
-  var xNeckL   = xNeckC - halfNeckW;
-  var xNeckR   = xNeckC + halfNeckW;
-  var yNeckBot = yLF + D * (8.0 / 57);
+  const sideFlapInset = T001_clamp(D * 0.07, 2, 18);
+  const sideFlapFlat = T001_clamp(D * 0.25, 6, D * 0.45);
+  const sideFlapToe = T001_clamp(D * 0.17, 5, D * 0.32);
+  const sideFlapNeckGap = T001_clamp(D * 0.035, 1.5, 8);
 
-  /* ── U-return ─────────────────────────────────────────────── */
-  var x35   = xP2 + D * (4.0   / 57);
-  var y35   = yTF + D * (55.1  / 57);
-  var y36   = yTF + D * (55.0  / 57);
-  var arcRu = D   * (2.0   / 57);
-
-  /* ── Lock 치수 (D 비율) ───────────────────────────────────── */
-  var lockStep     = D * (3.0   / 57);
-  var lockAOuter   = D * (13.5  / 57);
-  var lockAInner   = D * (17.5  / 57);
-  var lockASlotD   = D * (28.5  / 57);
-  var lockACornerR = D * (4.0   / 57);
-  var lockLRDiagX  = D * (30.0  / 57);
-  var lockLRDiagY  = D * (18.5  / 57);
-  var lockLRDepth  = D * (28.5  / 57);
-  var lockBDiagX   = D * (18.5  / 57);
-  var lockBVertBot = D * (39.5  / 57);
-  var lockBCornerR = D * (4.0   / 57);
-
-  /* ── Lock-A/B 파생 좌표 ────────────────────────────────────── */
-  var yLockAFlat  = yBB + lockLRDepth;
-  var yLockBVert  = yBB + lockBVertBot;
-  var lbInL       = xP3 + lockBDiagX;
-  var lbInR       = xP4 - lockBDiagX;
-  var lbGapHalf   = W * (6.0 / 57);
-  var lbGapL      = xNeckC - lbGapHalf + lockBCornerR;
-  var lbGapR      = xNeckC + lbGapHalf - lockBCornerR;
-
-  /* ── Lid side flap finger 연결점 ──────────────────────────── */
-  var x29R = xP4 - D * (24.0 / 57);
-  var y29  = yLSFTop + D * (17.0 / 57);
-  var x30R = xP4 - D * (28.0 / 57);
-  var y30  = yLSFTop + D * (21.0 / 57);
-  var x29L = xP3 + D * (24.0 / 57);
-  var x30L = xP3 + D * (28.0 / 57);
-
-  /* ── 1-28 (sfR/sfL bezier 끝점) ──────────────────────────── */
-  var x28R = xNeckR + W * (29.06 / 57);
-  var x28L = xNeckL - W * (29.06 / 57);
-  var y28  = yLSFTop + D * (3.71 / 57);
-
-  /* ── xEnd 우측 corner ─────────────────────────────────────── */
-  var xEndCorn = xEnd - D * (2.5 / 57);
-  var yEndCorn = yLF  - D * (2.5 / 57);
+  const foldGap = T001_clamp(minPanel * 0.005, 0.2, 1.5);
+  const labelFontSize = T001_clamp(minPanel * 0.09, 4, 8);
 
   return {
-    W: W, D: D, H: H,
-    /* X grid */
-    xP1: xP1, xP2: xP2, xP3: xP3, xP4: xP4, xEnd: xEnd,
-    xTC: xTC, xTFL: xTFL, xTFR: xTFR,
-    /* Y grid */
-    yTF: yTF, yLF: yLF, yBB: yBB, yLO: yLO,
-    yTS: yTS, yGD: yGD, yLSFTop: yLSFTop, yLF2: yLF2,
-    /* neck */
-    xNeckC: xNeckC, xNeckL: xNeckL, xNeckR: xNeckR, yNeckBot: yNeckBot,
-    /* U-return */
-    x35: x35, y35: y35, y36: y36, arcRu: arcRu,
-    /* lock */
-    lockStep: lockStep,
-    lockAOuter: lockAOuter, lockAInner: lockAInner,
-    lockASlotD: lockASlotD, lockACornerR: lockACornerR,
-    lockLRDiagX: lockLRDiagX, lockLRDiagY: lockLRDiagY, lockLRDepth: lockLRDepth,
-    lockBDiagX: lockBDiagX, lockBVertBot: lockBVertBot, lockBCornerR: lockBCornerR,
-    /* lock derived */
-    yLockAFlat: yLockAFlat, yLockBVert: yLockBVert,
-    lbInL: lbInL, lbInR: lbInR, lbGapL: lbGapL, lbGapR: lbGapR,
-    /* lid finger */
-    x29R: x29R, y29: y29, x30R: x30R, y30: y30, x29L: x29L, x30L: x30L,
-    /* 1-28 */
-    x28R: x28R, x28L: x28L, y28: y28,
-    /* xEnd corner */
-    xEndCorn: xEndCorn, yEndCorn: yEndCorn,
+    W, D, H,
+    glueWidth,
+    lidTopHeight,
+    tuckHeight,
+    lidFlapHeight,
+    bottomLockDepth,
+    lockStep,
+    lockCornerRadius,
+    lockAOuter,
+    lockAInner,
+    lockBDiagWidth,
+    lockBGapHalf,
+    lockSideDiagX,
+    lockSideDiagY,
+    neckWidth,
+    neckHeight,
+    notchWidth,
+    notchRadius,
+    notchDepth,
+    cornerRadius,
+    sideFlapInset,
+    sideFlapFlat,
+    sideFlapToe,
+    sideFlapNeckGap,
+    foldGap,
+    labelFontSize
   };
 }
