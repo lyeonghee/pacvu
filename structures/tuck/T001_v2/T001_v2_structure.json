@@ -1,0 +1,43 @@
+{
+  "meta": {
+    "name": "PacVu B-Type T001 v2",
+    "unit": "mm",
+    "version": "v2-first-pass",
+    "coordinateSystem": "absolute top-left origin",
+    "defaultSize": { "W": 57, "D": 57, "H": 177 },
+    "scope": "cutPath, foldLine, and extracted bleedPath; no offset-generated bleed, no 3D render"
+  },
+  "panelFlow": ["glue", "front", "sideL", "back", "sideR"],
+  "panels": [
+    { "id": "glue", "label": "Glue", "type": "glue", "parentPanel": "front", "foldLineId": "fold-glue-front", "foldAxis": "y", "foldDirection": "inward", "defaultFoldAngle": 180 },
+    { "id": "front", "label": "Front", "type": "body", "parentPanel": null, "foldLineId": null, "foldAxis": null, "foldDirection": "fixed", "defaultFoldAngle": 0 },
+    { "id": "sideL", "label": "Side(L)", "type": "body", "parentPanel": "front", "foldLineId": "fold-front-sideL", "foldAxis": "y", "foldDirection": "inward", "defaultFoldAngle": 90 },
+    { "id": "back", "label": "Back", "type": "body", "parentPanel": "sideL", "foldLineId": "fold-sideL-back", "foldAxis": "y", "foldDirection": "inward", "defaultFoldAngle": 90 },
+    { "id": "sideR", "label": "Side(R)", "type": "body", "parentPanel": "back", "foldLineId": "fold-back-sideR", "foldAxis": "y", "foldDirection": "inward", "defaultFoldAngle": 90 },
+    { "id": "lidTop", "label": "Lid Top", "type": "lid", "parentPanel": "front", "foldLineId": "fold-front-lidTop", "foldAxis": "x", "foldDirection": "inward", "defaultFoldAngle": 90 },
+    { "id": "upperTuck", "label": "Upper Tuck", "type": "tuck", "parentPanel": "lidTop", "foldLineId": "fold-lidTop-upperTuck", "foldAxis": "x", "foldDirection": "inward", "defaultFoldAngle": 180 },
+    { "id": "lidSideFlapL", "label": "Lid Side Flap(L)", "type": "flap", "parentPanel": "sideL", "foldLineId": "fold-sideL-lidSideFlapL", "foldAxis": "x", "foldDirection": "inward", "defaultFoldAngle": 90 },
+    { "id": "lidSideFlapR", "label": "Lid Side Flap(R)", "type": "flap", "parentPanel": "sideR", "foldLineId": "fold-sideR-lidSideFlapR", "foldAxis": "x", "foldDirection": "inward", "defaultFoldAngle": 90 },
+    { "id": "neck", "label": "Neck", "type": "neck", "parentPanel": "back", "foldLineId": "fold-back-neck", "foldAxis": "x", "foldDirection": "inward", "defaultFoldAngle": 90 },
+    { "id": "thumbNotch", "label": "Thumb Notch", "type": "notch", "parentPanel": "neck", "foldLineId": null, "foldAxis": null, "foldDirection": "cut", "defaultFoldAngle": 0 },
+    { "id": "bottomLockA", "label": "Bottom Lock A", "type": "lock", "parentPanel": "front", "foldLineId": "fold-front-bottomLockA", "foldAxis": "x", "foldDirection": "inward", "defaultFoldAngle": 90 },
+    { "id": "bottomLockL", "label": "Bottom Lock(L)", "type": "lock", "parentPanel": "sideL", "foldLineId": "fold-sideL-bottomLockL", "foldAxis": "x", "foldDirection": "inward", "defaultFoldAngle": 90 },
+    { "id": "bottomLockB", "label": "Bottom Lock B", "type": "lock", "parentPanel": "back", "foldLineId": "fold-back-bottomLockB", "foldAxis": "x", "foldDirection": "inward", "defaultFoldAngle": 90 },
+    { "id": "bottomLockR", "label": "Bottom Lock(R)", "type": "lock", "parentPanel": "sideR", "foldLineId": "fold-sideR-bottomLockR", "foldAxis": "x", "foldDirection": "inward", "defaultFoldAngle": 90 }
+  ],
+  "foldLines": [
+    { "id": "fold-glue-front", "from": "glue", "to": "front", "axis": "y" },
+    { "id": "fold-front-sideL", "from": "front", "to": "sideL", "axis": "y" },
+    { "id": "fold-sideL-back", "from": "sideL", "to": "back", "axis": "y" },
+    { "id": "fold-back-sideR", "from": "back", "to": "sideR", "axis": "y" },
+    { "id": "fold-front-lidTop", "from": "front", "to": "lidTop", "axis": "x" },
+    { "id": "fold-lidTop-upperTuck", "from": "lidTop", "to": "upperTuck", "axis": "x" },
+    { "id": "fold-sideL-lidSideFlapL", "from": "sideL", "to": "lidSideFlapL", "axis": "x" },
+    { "id": "fold-sideR-lidSideFlapR", "from": "sideR", "to": "lidSideFlapR", "axis": "x" },
+    { "id": "fold-back-neck", "from": "back", "to": "neck", "axis": "x" },
+    { "id": "fold-front-bottomLockA", "from": "front", "to": "bottomLockA", "axis": "x" },
+    { "id": "fold-sideL-bottomLockL", "from": "sideL", "to": "bottomLockL", "axis": "x" },
+    { "id": "fold-back-bottomLockB", "from": "back", "to": "bottomLockB", "axis": "x" },
+    { "id": "fold-sideR-bottomLockR", "from": "sideR", "to": "bottomLockR", "axis": "x" }
+  ]
+}
