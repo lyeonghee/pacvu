@@ -1,0 +1,19 @@
+# Node modules
+node_modules/
+package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Development versions (for reference, not active)
+structures/tuck/T001_v2/
+structures/tuck/T001/backup_old/
+
+# Build outputs
+dist/
+build/
