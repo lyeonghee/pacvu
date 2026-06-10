@@ -1,17 +1,17 @@
 // ============================================================
-// T001_layout.js - B-Type tuck box stable reference layout
-// Depends on T001_spec.js
+// T001_v2_layout.js - B-Type tuck box stable reference layout
+// Depends on T001_v2_spec.js
 // ============================================================
 
-function T001_round(value) {
+function T001_v2_round(value) {
   return +(+value).toFixed(4);
 }
 
-function T001_point(x, y) {
-  return T001_round(x) + ',' + T001_round(y);
+function T001_v2_point(x, y) {
+  return T001_v2_round(x) + ',' + T001_v2_round(y);
 }
 
-function T001_getGrid(spec) {
+function T001_v2_getGrid(spec) {
   const D = spec.D;
   const xGlueL = 0;
   const glueWidth = Math.min(D * (25 / 57), 30);
@@ -43,7 +43,7 @@ function T001_getGrid(spec) {
   };
 }
 
-function T001_buildOuterPath(spec, grid) {
+function T001_v2_buildOuterPath(spec, grid) {
   const W = spec.W;
   const D = spec.D;
   const {
@@ -60,7 +60,7 @@ function T001_buildOuterPath(spec, grid) {
     yLockBottom: yLO
   } = grid;
 
-  const P = T001_point;
+  const P = T001_v2_point;
   const k = 0.5523;
 
   const yLSFTop = yLF - D * (28 / 57);
@@ -215,7 +215,7 @@ function T001_buildOuterPath(spec, grid) {
   ].join(' ');
 }
 
-function T001_buildBleedPath_referenceMapLegacy(spec, grid) {
+function T001_v2_buildBleedPath_referenceMapLegacy(spec, grid) {
   const ref = {
     W: 57,
     D: 57,
@@ -334,11 +334,11 @@ function T001_buildBleedPath_referenceMapLegacy(spec, grid) {
 
   return bleedD.replace(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/g, pair => {
     const [x, y] = pair.split(',').map(Number);
-    return T001_point(legacyMapX(x), legacyMapY(y));
+    return T001_v2_point(legacyMapX(x), legacyMapY(y));
   });
 }
 
-function T001_buildBleedPath(spec, grid) {
+function T001_v2_buildBleedPath(spec, grid) {
   const D = spec.D;
   const {
     xFrontL: xP1,
@@ -352,7 +352,7 @@ function T001_buildBleedPath(spec, grid) {
     yLockBottom: yLO
   } = grid;
 
-  const P = T001_point;
+  const P = T001_v2_point;
   const S = value => D * (value / 57);
   const b = 3;
   const k = 0.5523;
@@ -774,7 +774,7 @@ function T001_buildBleedPath(spec, grid) {
   ].flatMap(buildSegment => buildSegment()).join(' ');
 }
 
-function T001_buildFoldLines(spec, grid) {
+function T001_v2_buildFoldLines(spec, grid) {
   const D = spec.D;
   const fe = D * (0.3 / 57);
   const fe2 = D * (2.3 / 57);
@@ -805,7 +805,7 @@ function T001_buildFoldLines(spec, grid) {
   ];
 }
 
-function T001_getPathBounds(paths, foldLines) {
+function T001_v2_getPathBounds(paths, foldLines) {
   const xs = [];
   const ys = [];
   paths.forEach(path => {
@@ -820,31 +820,31 @@ function T001_getPathBounds(paths, foldLines) {
     ys.push(line.y1, line.y2);
   });
   return {
-    minX: T001_round(Math.min(...xs)),
-    minY: T001_round(Math.min(...ys)),
-    maxX: T001_round(Math.max(...xs)),
-    maxY: T001_round(Math.max(...ys)),
-    width: T001_round(Math.max(...xs) - Math.min(...xs)),
-    height: T001_round(Math.max(...ys) - Math.min(...ys))
+    minX: T001_v2_round(Math.min(...xs)),
+    minY: T001_v2_round(Math.min(...ys)),
+    maxX: T001_v2_round(Math.max(...xs)),
+    maxY: T001_v2_round(Math.max(...ys)),
+    width: T001_v2_round(Math.max(...xs) - Math.min(...xs)),
+    height: T001_v2_round(Math.max(...ys) - Math.min(...ys))
   };
 }
 
-function T001_getLayout(W, D, H) {
-  const spec = T001_getSpec({ W, D, H });
-  const grid = T001_getGrid(spec);
-  const outerPath = T001_buildOuterPath(spec, grid);
-  const bleedPath = T001_buildBleedPath(spec, grid);
-  const foldLines = T001_buildFoldLines(spec, grid);
+function T001_v2_getLayout(W, D, H) {
+  const spec = T001_v2_getSpec({ W, D, H });
+  const grid = T001_v2_getGrid(spec);
+  const outerPath = T001_v2_buildOuterPath(spec, grid);
+  const bleedPath = T001_v2_buildBleedPath(spec, grid);
+  const foldLines = T001_v2_buildFoldLines(spec, grid);
   const xBackC = (grid.xSideLR + grid.xBackR) / 2;
 
   const notchSegment = {
     id: 'thumbNotch',
     type: 'notch',
     parentPanel: 'back',
-    centerX: T001_round(xBackC),
-    y: T001_round(grid.yBodyTop),
-    width: T001_round(D * (18 / 57)),
-    depth: T001_round(D * (8 / 57))
+    centerX: T001_v2_round(xBackC),
+    y: T001_v2_round(grid.yBodyTop),
+    width: T001_v2_round(D * (18 / 57)),
+    depth: T001_v2_round(D * (8 / 57))
   };
 
   return {
@@ -860,6 +860,6 @@ function T001_getLayout(W, D, H) {
     referencePoints: [],
     panels: [],
     labels: [],
-    bounds: T001_getPathBounds([outerPath], foldLines)
+    bounds: T001_v2_getPathBounds([outerPath], foldLines)
   };
 }

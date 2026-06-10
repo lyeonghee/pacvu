@@ -1,12 +1,12 @@
 // ============================================================
-// T001_renderer.js - SVG renderer
-// Depends on T001_spec.js, T001_layout.js
+// T001_v2_renderer.js - SVG renderer
+// Depends on T001_v2_spec.js, T001_v2_layout.js
 // ============================================================
 
-function T001_renderSVG(cfg, appState) {
-  const layout = T001_getLayout(cfg.W, cfg.D, cfg.H);
+function T001_v2_renderSVG(cfg, appState) {
+  const layout = T001_v2_getLayout(cfg.W, cfg.D, cfg.H);
   const { spec, grid, closedOuterPath, bleedPath, foldLines, bounds } = layout;
-  const N = T001_round;
+  const N = T001_v2_round;
   const pad = 80;
   const vbX = bounds.minX - pad;
   const vbY = bounds.minY - pad;
@@ -38,7 +38,7 @@ function T001_renderSVG(cfg, appState) {
   <rect x="${N(vbX)}" y="${N(vbY)}" width="${N(vbW)}" height="${N(vbH)}" fill="#d0d0d0" stroke="none"/>
   <g id="viewportGroup">
     <g id="layer-fill"><path id="fill-outer" class="cut-area" fill-rule="nonzero" d="${closedOuterPath}"/></g>
-    ${T001_buildGlueFillLayer(spec, grid)}
+    ${T001_v2_buildGlueFillLayer(spec, grid)}
     <g id="layer-bleed"><path id="bleedPath" class="bleed" d="${bleedPath}"/></g>
     <g id="layer-cut"><path id="cutPath" class="cut-fill" fill-rule="nonzero" d="${closedOuterPath}"/></g>`;
 
@@ -51,11 +51,11 @@ function T001_renderSVG(cfg, appState) {
   }
 
   if (!appState || appState.showLabels) {
-    svg += T001_buildLabelLayer(spec, grid);
+    svg += T001_v2_buildLabelLayer(spec, grid);
   }
 
   if (!appState || appState.showDims) {
-    svg += T001_buildDimensionLayer(spec, grid);
+    svg += T001_v2_buildDimensionLayer(spec, grid);
   }
 
   svg += `
@@ -65,8 +65,8 @@ function T001_renderSVG(cfg, appState) {
   return svg;
 }
 
-function T001_buildGlueFillLayer(spec, grid) {
-  const N = T001_round;
+function T001_v2_buildGlueFillLayer(spec, grid) {
+  const N = T001_v2_round;
   const D = spec.D;
   const glueSlope = D * (6.699 / 57);
   const xL = grid.xGlueL;
@@ -94,8 +94,8 @@ function T001_buildGlueFillLayer(spec, grid) {
   return `\n    <g id="layer-glue-fill"><path id="glue-fill" class="glue-area" d="${d}"/></g>`;
 }
 
-function T001_buildLabelLayer(spec, grid) {
-  const N = T001_round;
+function T001_v2_buildLabelLayer(spec, grid) {
+  const N = T001_v2_round;
   const ySideFlapTop = grid.yBodyTop - spec.lidFlapHeight;
   const labels = [
     { name: 'Glue', x: grid.xGlueL, y: grid.yBodyTop, w: grid.xFrontL - grid.xGlueL, h: spec.H },
@@ -125,8 +125,8 @@ function T001_buildLabelLayer(spec, grid) {
   return out;
 }
 
-function T001_buildDimensionLayer(spec, grid) {
-  const N = T001_round;
+function T001_v2_buildDimensionLayer(spec, grid) {
+  const N = T001_v2_round;
   const dim = [];
   const bodyMidY = (grid.yBodyTop + grid.yBodyBottom) / 2;
   const dimY = bodyMidY + spec.H * 0.18;
@@ -159,10 +159,10 @@ function T001_buildDimensionLayer(spec, grid) {
   return `\n    <g id="layer-dimensions">${dim.join('')}\n    </g>`;
 }
 
-function T001_buildExportSVG(cfg) {
-  const layout = T001_getLayout(cfg.W, cfg.D, cfg.H);
+function T001_v2_buildExportSVG(cfg) {
+  const layout = T001_v2_getLayout(cfg.W, cfg.D, cfg.H);
   const { closedOuterPath, bleedPath, foldLines, bounds } = layout;
-  const N = T001_round;
+  const N = T001_v2_round;
   const pad = 5;
   const vbX = bounds.minX - pad;
   const vbY = bounds.minY - pad;
@@ -181,8 +181,8 @@ function T001_buildExportSVG(cfg) {
   return out;
 }
 
-function T001_buildDXF(cfg) {
-  const layout = T001_getLayout(cfg.W, cfg.D, cfg.H);
+function T001_v2_buildDXF(cfg) {
+  const layout = T001_v2_getLayout(cfg.W, cfg.D, cfg.H);
   const arr = ['0', 'SECTION', '2', 'ENTITIES'];
   layout.foldLines.forEach(line => {
     arr.push('0', 'LINE', '8', 'FOLD', '10', line.x1, '20', -line.y1, '30', '0', '11', line.x2, '21', -line.y2, '31', '0');

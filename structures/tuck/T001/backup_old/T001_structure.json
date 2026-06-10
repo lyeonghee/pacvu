@@ -1,0 +1,54 @@
+{
+  "meta": {
+    "name": "PacVu T001 — B-Type Tuck End Box",
+    "engineKey": "bbox",
+    "unit": "mm",
+    "version": "v1.5-parametric",
+    "geometryLock": "v1.5 (희야 승인 2025-05-22)",
+    "bleed": "3mm (희야 승인 2025-05-23)",
+    "refSize": { "W": 57, "D": 57, "H": 177 },
+    "coordinateSystem": "natural (top-left 0,0, Y down)"
+  },
+  "geometryRules": {
+    "X_grid": {
+      "xP1": "D * (25/57)",
+      "xP2": "xP1 + D",
+      "xP3": "xP2 + W",
+      "xP4": "xP3 + D",
+      "xEnd": "xP4 + D * (55.504/57)"
+    },
+    "Y_grid": {
+      "yTF": "D * (23/57)",
+      "yLF": "yTF + D",
+      "yBB": "yLF + H",
+      "yLO": "yBB + D * (43.5/57)"
+    },
+    "lock": {
+      "lockStep": "D * (3/57)",
+      "lockAOuter": "D * (13.5/57)",
+      "lockAInner": "D * (17.5/57)",
+      "lockASlotD": "D * (28.5/57)",
+      "lockBDiagX": "D * (18.5/57)",
+      "lockBDiagY": "D * (28.5/57)",
+      "lockBVertBot": "D * (39.5/57)"
+    },
+    "neck": {
+      "neckWidth": "W * (18/57)",
+      "neckDepth": "D * (8/57)"
+    }
+  },
+  "foldLines": [
+    { "id":"f-1",  "desc":"tuck fold (y=yTF)" },
+    { "id":"f-2",  "desc":"lid fold top (y=yTF+D*(56/57))" },
+    { "id":"f-3",  "desc":"lid fold left horizontal" },
+    { "id":"f-4",  "desc":"lid fold right horizontal" },
+    { "id":"f-5",  "desc":"body left (xP1~xP2)" },
+    { "id":"f-6",  "desc":"body center-L (xP2~xP3)" },
+    { "id":"f-7",  "desc":"body center-R (xP3~xP4)" },
+    { "id":"f-8",  "desc":"body right (xP4~xEnd)" },
+    { "id":"f-9",  "desc":"vertical left (xP1)" },
+    { "id":"f-10", "desc":"vertical xP2 (from f-2 to yBB)" },
+    { "id":"f-11", "desc":"vertical xP3" },
+    { "id":"f-12", "desc":"vertical xP4" }
+  ]
+}
