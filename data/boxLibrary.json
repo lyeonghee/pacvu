@@ -20,14 +20,6 @@
         "engineKey":"bbox",
         "variantKey":"default",
         "defaultDims":{ "W":57, "D":57, "H":177 }
-      },
-      {
-        "label":"B-Type T001 v2 / cutPath + foldLine",
-        "koreanName":"B형 타입 T001 v2",
-        "fefcoCode":"0471",
-        "engineKey":"bbox_v2",
-        "variantKey":"first-pass",
-        "defaultDims":{ "W":57, "D":57, "H":177 }
       }
     ]
   },

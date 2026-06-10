@@ -31,13 +31,8 @@ function _buildT001DXF(cfg) {
   return T001_buildDXF(cfg);
 }
 
-function _buildT001v2DXF(cfg) {
-  return T001_v2_buildDXF(cfg);
-}
-
 function buildDXF(cfg, engineKey) {
   if (engineKey === 'gbox') return _buildM001DXF(cfg);
   if (engineKey === 'bbox') return _buildT001DXF(cfg);
-  if (engineKey === 'bbox_v2') return _buildT001v2DXF(cfg);
   return '';
 }

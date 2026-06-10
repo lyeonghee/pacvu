@@ -56,14 +56,9 @@ function _buildT001ExportSVG(cfg) {
   return T001_buildExportSVG(cfg);
 }
 
-function _buildT001v2ExportSVG(cfg) {
-  return T001_v2_buildExportSVG(cfg);
-}
-
-// ── dispatcher ───────────────────────────────────────────────
+// ─ dispatcher ────────────────────────────
 function buildExportSVG(cfg, engineKey) {
   if (engineKey === 'gbox') return _buildM001ExportSVG(cfg);
   if (engineKey === 'bbox') return _buildT001ExportSVG(cfg);
-  if (engineKey === 'bbox_v2') return _buildT001v2ExportSVG(cfg);
   return '';
 }
