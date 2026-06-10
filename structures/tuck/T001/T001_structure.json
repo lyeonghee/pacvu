@@ -1,8 +1,8 @@
 {
   "meta": {
-    "name": "PacVu B-Type T001 v2",
+    "name": "PacVu B-Type T001",
     "unit": "mm",
-    "version": "v2-first-pass",
+    "version": "v1-final",
     "coordinateSystem": "absolute top-left origin",
     "defaultSize": { "W": 57, "D": 57, "H": 177 },
     "scope": "cutPath, foldLine, and extracted bleedPath; no offset-generated bleed, no 3D render"
